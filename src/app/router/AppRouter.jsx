@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import LandingPage from "../../pages/client/LandingPage";
 import Register from "../../pages/auth/Register";
+
 import Login from "../../pages/auth/Login";
 import OAuthLogin from "../../pages/auth/OAuthLogin";
 import VerifyOtp from "../../pages/auth/VerifyOtp";
@@ -13,6 +15,7 @@ import MFAQRScanner from "../../features/mfa/MFAQRScanner";
 import ProtectedRoute from "./ProtectedRoute";
 // Auth dashboards
 import Dashboard from "../../pages/auth/Dashboard";
+
 // Role-specific dashboards
 import ArchitectDashboard from "../../pages/architect/Dashboard";
 import ClientDashboard from "../../pages/client/ClientDashboard";
@@ -26,6 +29,7 @@ export default function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<LandingPage />} />
         <Route path="/register" element={<Register />} />
         <Route path="/verify-otp" element={<VerifyOtp />} />
         <Route path="/login" element={<Login />} />
@@ -39,6 +43,7 @@ export default function AppRouter() {
         <Route path="/mfa-qr-scanner" element={<ProtectedRoute><MFAQRScanner /></ProtectedRoute>} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         {/* Role-specific dashboards */}
+  
         <Route path="/architect/dashboard" element={<ProtectedRoute><ArchitectDashboard /></ProtectedRoute>} />
         <Route path="/engineer/dashboard" element={<ProtectedRoute><EngineerDashboard /></ProtectedRoute>} />
         <Route path="/client/dashboard" element={<ProtectedRoute><ClientDashboard /></ProtectedRoute>} />
@@ -47,6 +52,8 @@ export default function AppRouter() {
         <Route path="/admin/settings" element={<ProtectedRoute><AdminSettings /></ProtectedRoute>} />
         <Route path="/client/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/client/edit-profile" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
+       
+        
       </Routes>
     </BrowserRouter>
   );
