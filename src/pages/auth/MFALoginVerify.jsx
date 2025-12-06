@@ -35,10 +35,12 @@ export default function MFALoginVerify() {
       setMfaCompleted();
 
       localStorage.removeItem("pending_user_id");
+      localStorage.removeItem("pending_role");
 
       setMessage("MFA verified! Redirecting...");
 
-      const role = res.data.role;
+      // Get role from response, or fallback to stored pending role
+      const role = res.data.role || localStorage.getItem("role");
 
       setTimeout(() => {
         if (role === "architect") navigate("/architect/dashboard");

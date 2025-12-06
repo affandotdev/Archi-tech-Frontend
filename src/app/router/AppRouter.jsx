@@ -44,12 +44,12 @@ export default function AppRouter() {
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         {/* Role-specific dashboards */}
   
-        <Route path="/architect/dashboard" element={<ProtectedRoute><ArchitectDashboard /></ProtectedRoute>} />
-        <Route path="/engineer/dashboard" element={<ProtectedRoute><EngineerDashboard /></ProtectedRoute>} />
-        <Route path="/client/dashboard" element={<ProtectedRoute><ClientDashboard /></ProtectedRoute>} />
-        <Route path="/admin/dashboard" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
-        <Route path="/admin/users" element={<ProtectedRoute><AdminUsers /></ProtectedRoute>} />
-        <Route path="/admin/settings" element={<ProtectedRoute><AdminSettings /></ProtectedRoute>} />
+        <Route path="/architect/dashboard" element={<ProtectedRoute requiredRole="architect"><ArchitectDashboard /></ProtectedRoute>} />
+        <Route path="/engineer/dashboard" element={<ProtectedRoute requiredRole="engineer"><EngineerDashboard /></ProtectedRoute>} />
+        <Route path="/client/dashboard" element={<ProtectedRoute requiredRole="client"><ClientDashboard /></ProtectedRoute>} />
+        <Route path="/admin/dashboard" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
+        <Route path="/admin/users" element={<ProtectedRoute requiredRole="admin"><AdminUsers /></ProtectedRoute>} />
+        <Route path="/admin/settings" element={<ProtectedRoute requiredRole="admin"><AdminSettings /></ProtectedRoute>} />
         <Route path="/client/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/client/edit-profile" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
        

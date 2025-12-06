@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import LogoutButton from "../auth/Logout Button";
+import { useAuth } from "../../context/AuthContext";
 
 export default function ClientDashboard() {
-  const [user, setUser] = useState(null);
+  const { user: authUser, role } = useAuth();
   const [activeProjects, setActiveProjects] = useState(3);
   const [pendingTasks, setPendingTasks] = useState(5);
   const navigate = useNavigate();
@@ -16,16 +17,15 @@ export default function ClientDashboard() {
       return;
     }
 
-    // In a real app, you would fetch user data from your API
-    // For now, we'll simulate user data
-    setUser({
-      email: "client@example.com",
-      firstName: "Jane",
-      lastName: "Client",
-      company: "Urban Development Corp",
-      memberSince: "2024"
-    });
-  }, [navigate]);
+    // Verify user has the correct role (client or default)
+    if (role && role !== "client" && role !== "user") {
+      // Redirect to appropriate dashboard based on actual role
+      if (role === "architect") navigate("/architect/dashboard");
+      else if (role === "engineer") navigate("/engineer/dashboard");
+      else if (role === "admin") navigate("/admin/dashboard");
+      return;
+    }
+  }, [navigate, role]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-blue-900">
@@ -79,7 +79,7 @@ export default function ClientDashboard() {
                   <span className="text-gray-300 text-sm font-medium uppercase tracking-wider">CLIENT PORTAL</span>
                 </div>
                 <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">
-                  Welcome, <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">{user?.firstName}</span>
+                  Welcome, <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">{authUser?.firstName || authUser?.email?.split("@")[0] || "Client"}</span>
                 </h2>
                 <p className="text-gray-300 font-light max-w-2xl">
                   Monitor your construction projects, review blueprints, and collaborate with your architectural team in real-time.
@@ -89,7 +89,7 @@ export default function ClientDashboard() {
                 <div className="inline-flex items-center px-4 py-2 bg-gray-800/50 rounded-xl border border-gray-700/50">
                   <div className="mr-3">
                     <p className="text-gray-400 text-xs">Member Since</p>
-                    <p className="text-white font-bold">{user?.memberSince}</p>
+                    <p className="text-white font-bold">{authUser?.memberSince || "2024"}</p>
                   </div>
                   <div className="w-px h-8 bg-gray-700/50 mx-3"></div>
                   <div>
@@ -131,8 +131,12 @@ export default function ClientDashboard() {
                           </div>
                           <div>
                             <p className="text-gray-400 text-sm">Primary Contact</p>
-                            <p className="text-white text-lg font-semibold">{user?.firstName} {user?.lastName}</p>
-                            <p className="text-gray-300 text-sm">{user?.email}</p>
+                            <p className="text-white text-lg font-semibold">
+                              {authUser?.firstName && authUser?.lastName 
+                                ? `${authUser.firstName} ${authUser.lastName}`
+                                : authUser?.email?.split("@")[0] || "Client"}
+                            </p>
+                            <p className="text-gray-300 text-sm">{authUser?.email || "client@example.com"}</p>
                           </div>
                         </div>
 
@@ -144,7 +148,7 @@ export default function ClientDashboard() {
                           </div>
                           <div>
                             <p className="text-gray-400 text-sm">Organization</p>
-                            <p className="text-white text-lg font-semibold">{user?.company}</p>
+                            <p className="text-white text-lg font-semibold">{authUser?.company || "Client Organization"}</p>
                             <p className="text-gray-300 text-sm">Project Sponsor</p>
                           </div>
                         </div>

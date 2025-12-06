@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import LogoutButton from "../auth/Logout Button";
+import { useAuth } from "../../context/AuthContext";
 
 export default function EngineerDashboard() {
-  const [user, setUser] = useState(null);
+  const { user: authUser, role } = useAuth();
   const [openIssues] = useState(5);
   const [sites] = useState(3);
   const navigate = useNavigate();
@@ -15,13 +16,15 @@ export default function EngineerDashboard() {
       return;
     }
 
-    setUser({
-      email: "engineer@example.com",
-      firstName: "Emma",
-      lastName: "Engineer",
-      discipline: "Structural Engineer",
-    });
-  }, [navigate]);
+    // Verify user has the correct role (only redirect if role is set and doesn't match)
+    if (role && role !== "engineer") {
+      // Redirect to appropriate dashboard based on actual role
+      if (role === "architect") navigate("/architect/dashboard");
+      else if (role === "admin") navigate("/admin/dashboard");
+      else if (role === "client" || role === "user") navigate("/client/dashboard");
+      return;
+    }
+  }, [navigate, role]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-900">
@@ -63,7 +66,7 @@ export default function EngineerDashboard() {
                   Engineer
                 </span>
                 <span className="text-sm text-slate-100 font-medium">
-                  {user ? `${user.firstName} ${user.lastName}` : "Engineer"}
+                  {authUser ? (authUser.firstName && authUser.lastName ? `${authUser.firstName} ${authUser.lastName}` : authUser.email?.split("@")[0] || "Engineer") : "Engineer"}
                 </span>
               </div>
               <LogoutButton />
@@ -85,7 +88,7 @@ export default function EngineerDashboard() {
                 <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">
                   Hello,{" "}
                   <span className="bg-gradient-to-r from-emerald-300 to-cyan-200 bg-clip-text text-transparent">
-                    {user?.firstName || "Engineer"}
+                    {authUser?.firstName || authUser?.email?.split("@")[0] || "Engineer"}
                   </span>
                 </h2>
                 <p className="text-slate-300 text-sm md:text-base max-w-2xl">
@@ -126,16 +129,18 @@ export default function EngineerDashboard() {
                   <div>
                     <p className="text-xs text-slate-400 mb-1">Name</p>
                     <p className="text-base font-semibold text-white">
-                      {user
-                        ? `${user.firstName} ${user.lastName}`
+                      {authUser
+                        ? (authUser.firstName && authUser.lastName
+                            ? `${authUser.firstName} ${authUser.lastName}`
+                            : authUser.email?.split("@")[0] || "Engineer User")
                         : "Engineer User"}
                     </p>
                     <p className="text-xs text-slate-400 mt-2">Discipline</p>
                     <p className="text-sm text-slate-200">
-                      {user?.discipline || "Engineering"}
+                      {authUser?.discipline || "Engineering"}
                     </p>
                     <p className="text-xs text-slate-400 mt-2">Email</p>
-                    <p className="text-sm text-slate-200">{user?.email}</p>
+                    <p className="text-sm text-slate-200">{authUser?.email || "engineer@example.com"}</p>
                   </div>
                   <div>
                     <p className="text-xs text-slate-400 mb-2">Workload</p>

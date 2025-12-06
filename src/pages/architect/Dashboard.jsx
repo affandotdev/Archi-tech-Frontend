@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import LogoutButton from "../auth/Logout Button";
+import { useAuth } from "../../context/AuthContext";
 
 export default function ArchitectDashboard() {
-  const [user, setUser] = useState(null);
+  const { user: authUser, role } = useAuth();
   const [mfaEnabled, setMfaEnabled] = useState(false);
   const [activeProjects] = useState(4);
   const [pendingReviews] = useState(7);
@@ -16,17 +17,18 @@ export default function ArchitectDashboard() {
       return;
     }
 
-    // Simulated architect user
-    setUser({
-      email: "architect@example.com",
-      firstName: "John",
-      lastName: "Architect",
-      studio: "Skyline Design Studio",
-    });
+    // Verify user has the correct role
+    if (role !== "architect") {
+      // Redirect to appropriate dashboard based on actual role
+      if (role === "engineer") navigate("/engineer/dashboard");
+      else if (role === "admin") navigate("/admin/dashboard");
+      else navigate("/client/dashboard");
+      return;
+    }
 
     // Simulate MFA flag (would come from API in real app)
     setMfaEnabled(false);
-  }, [navigate]);
+  }, [navigate, role]);
 
   const handleEnableMFA = () => {
     navigate("/mfa-setup");
@@ -72,7 +74,7 @@ export default function ArchitectDashboard() {
                   Signed in as
                 </span>
                 <span className="text-sm text-slate-100 font-medium">
-                  {user ? `${user.firstName} ${user.lastName}` : "Architect"}
+                  {authUser ? (authUser.firstName && authUser.lastName ? `${authUser.firstName} ${authUser.lastName}` : authUser.email?.split("@")[0] || "Architect") : "Architect"}
                 </span>
               </div>
               <LogoutButton />
@@ -94,7 +96,7 @@ export default function ArchitectDashboard() {
                 <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">
                   Good day,{" "}
                   <span className="bg-gradient-to-r from-sky-300 to-cyan-200 bg-clip-text text-transparent">
-                    {user?.firstName || "Architect"}
+                    {authUser?.firstName || authUser?.email?.split("@")[0] || "Architect"}
                   </span>
                 </h2>
                 <p className="text-slate-300 text-sm md:text-base max-w-2xl">
@@ -144,16 +146,16 @@ export default function ArchitectDashboard() {
                     PROFILE & PRACTICE
                   </h3>
                   <span className="text-xs text-slate-400">
-                    {user?.studio || "Independent Architect"}
+                    {authUser?.studio || "Independent Architect"}
                   </span>
                 </div>
                 <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="flex gap-4">
                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-sky-500/30 to-cyan-400/20 flex items-center justify-center">
                       <span className="text-xl font-semibold text-sky-200">
-                        {user?.firstName
-                          ? user.firstName.charAt(0).toUpperCase()
-                          : "A"}
+                        {authUser?.firstName
+                          ? authUser.firstName.charAt(0).toUpperCase()
+                          : authUser?.email?.charAt(0).toUpperCase() || "A"}
                       </span>
                     </div>
                     <div>
@@ -161,12 +163,14 @@ export default function ArchitectDashboard() {
                         Signed-in architect
                       </p>
                       <p className="text-base font-semibold text-white">
-                        {user
-                          ? `${user.firstName} ${user.lastName}`
+                        {authUser
+                          ? (authUser.firstName && authUser.lastName 
+                              ? `${authUser.firstName} ${authUser.lastName}`
+                              : authUser.email?.split("@")[0] || "Architect User")
                           : "Architect User"}
                       </p>
                       <p className="text-xs text-slate-400 mt-1">
-                        {user?.email}
+                        {authUser?.email || "architect@example.com"}
                       </p>
                     </div>
                   </div>

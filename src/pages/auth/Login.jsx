@@ -19,8 +19,11 @@ export default function Login() {
       // Check if MFA is required
       if (res.data.mfa_required) {
         console.log('MFA is required, redirecting to MFA verification');
-        // Store user ID for MFA verification
+        // Store user ID and role for MFA verification
         localStorage.setItem("pending_user_id", res.data.user_id);
+        if (res.data.role) {
+          localStorage.setItem("pending_role", res.data.role);
+        }
         // Redirect to MFA verification for login
         navigate("/mfa-login-verify");
       } else {

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import LogoutButton from "../auth/Logout Button";
+import { useAuth } from "../../context/AuthContext";
 
 export default function AdminDashboard() {
-  const [user, setUser] = useState(null);
+  const { user: authUser, role } = useAuth();
   const [stats] = useState({
     totalUsers: 128,
     activeSessions: 23,
@@ -18,12 +19,15 @@ export default function AdminDashboard() {
       return;
     }
 
-    setUser({
-      email: "admin@example.com",
-      firstName: "Admin",
-      lastName: "User",
-    });
-  }, [navigate]);
+    // Verify user has the correct role
+    if (role !== "admin") {
+      // Redirect to appropriate dashboard based on actual role
+      if (role === "architect") navigate("/architect/dashboard");
+      else if (role === "engineer") navigate("/engineer/dashboard");
+      else navigate("/client/dashboard");
+      return;
+    }
+  }, [navigate, role]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-900">
@@ -65,7 +69,7 @@ export default function AdminDashboard() {
                   Administrator
                 </span>
                 <span className="text-sm text-slate-100 font-medium">
-                  {user ? `${user.firstName} ${user.lastName}` : "Admin"}
+                  {authUser ? (authUser.firstName && authUser.lastName ? `${authUser.firstName} ${authUser.lastName}` : authUser.email?.split("@")[0] || "Admin") : "Admin"}
                 </span>
               </div>
               <LogoutButton />
@@ -87,7 +91,7 @@ export default function AdminDashboard() {
                 <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">
                   Welcome back,{" "}
                   <span className="bg-gradient-to-r from-indigo-300 to-violet-200 bg-clip-text text-transparent">
-                    {user?.firstName || "Admin"}
+                    {authUser?.firstName || authUser?.email?.split("@")[0] || "Admin"}
                   </span>
                 </h2>
                 <p className="text-slate-300 text-sm md:text-base max-w-2xl">
@@ -134,12 +138,14 @@ export default function AdminDashboard() {
                   <div>
                     <p className="text-xs text-slate-400 mb-1">Name</p>
                     <p className="text-base font-semibold text-white">
-                      {user
-                        ? `${user.firstName} ${user.lastName}`
+                      {authUser
+                        ? (authUser.firstName && authUser.lastName
+                            ? `${authUser.firstName} ${authUser.lastName}`
+                            : authUser.email?.split("@")[0] || "Admin User")
                         : "Admin User"}
                     </p>
                     <p className="text-xs text-slate-400 mt-2">Email</p>
-                    <p className="text-sm text-slate-200">{user?.email}</p>
+                    <p className="text-sm text-slate-200">{authUser?.email || "admin@example.com"}</p>
                   </div>
                   <div>
                     <p className="text-xs text-slate-400 mb-2">
