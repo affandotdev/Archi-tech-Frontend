@@ -46,15 +46,32 @@ const userHttp = axios.create({
 });
 
 userHttp.interceptors.request.use((config) => {
-  const token = localStorage.getItem("access");   // FIXED
-
-  console.log("Sending token to USER SERVICE:", token);
+  // Try multiple common token keys
+  const token =
+    localStorage.getItem("access") ||
+    localStorage.getItem("access_token") ||
+    localStorage.getItem("token");
 
   if (token && token !== "undefined" && token !== "null") {
     config.headers.Authorization = `Bearer ${token}`;
+    // console.log("Sending token to USER SERVICE"); // Optional: reduce noise
+  } else {
+    console.warn("No auth token found in localStorage (checked 'access', 'access_token', 'token')");
   }
 
   return config;
 });
+
+// RESPONSE INTERCEPTOR
+userHttp.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response) {
+      // typical error logging
+      console.error(`UserService Error: ${error.response.status} ${error.response.statusText}`, error.response.data);
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default userHttp;

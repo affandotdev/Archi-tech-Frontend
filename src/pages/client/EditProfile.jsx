@@ -26,7 +26,8 @@ export default function EditProfile() {
     if (typeof raw === "string" && raw.startsWith("http")) {
       return raw;
     }
-    return `http://localhost:8001${raw}`;
+    const path = raw.startsWith("/") ? raw : `/${raw}`;
+    return `http://localhost:8001${path}`;
   };
 
   useEffect(() => {
@@ -35,26 +36,38 @@ export default function EditProfile() {
         setLoading(true);
         setError(null);
         const response = await getProfile();
-        const data = response.data?.data || response.data || {};
+        console.log("Edit Client Profile Raw Response:", response);
+
+        let data = response.data;
+        if (data.data) {
+          data = data.data;
+        }
+
+        if (data.profile) {
+          data = { ...data, ...data.profile };
+        }
+        if (data.user) {
+          data = { ...data, ...data.user };
+        }
+
+        console.log("Parsed Edit Client Profile Data:", data);
+
+        // Prevent controlled input nullification
         setProfile({
           first_name: data.first_name || "",
           last_name: data.last_name || "",
           bio: data.bio || "",
           location: data.location || "",
         });
-        setCurrentAvatar(buildImageUrl(data.profile_image || data.avatar_url));
+
+        if (data.profile_image || data.avatar_url) {
+          setCurrentAvatar(buildImageUrl(data.profile_image || data.avatar_url));
+        }
       } catch (err) {
-        console.error("Error fetching profile:", err);
-        if (err.response?.status === 404) {
-          setError(
-            "Profile not found. Fill in the form below to create your profile."
-          );
-        } else {
-          setError(
-            err.response?.data?.error ||
-              err.message ||
-              "Failed to load profile."
-          );
+        console.warn("Error fetching profile (might be new user):", err);
+        // If 404, we just let them stay on the form to create a new profile
+        if (err.response?.status !== 404) {
+          setError("Failed to load existing profile data.");
         }
       } finally {
         setLoading(false);
@@ -79,14 +92,21 @@ export default function EditProfile() {
       setSuccess("Profile updated successfully!");
       setTimeout(() => {
         navigate("/client/profile");
-      }, 1200);
+      }, 1000);
     } catch (err) {
       console.error("Error updating profile:", err);
-      setError(
-        err.response?.data?.error ||
-          err.message ||
-          "Failed to update profile. Please try again."
-      );
+      // Construct a better error message if available
+      let errorMsg = "Failed to update profile.";
+      if (err.response?.data) {
+        if (typeof err.response.data === "string") {
+          errorMsg = err.response.data;
+        } else if (err.response.data.error) {
+          errorMsg = err.response.data.error;
+        } else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        }
+      }
+      setError(errorMsg);
     } finally {
       setSaving(false);
     }
@@ -104,19 +124,21 @@ export default function EditProfile() {
       setSuccess(null);
       const formData = new FormData();
       formData.append("profile_image", imageFile);
+
       const res = await uploadProfileImage(formData);
       setSuccess("Image uploaded successfully!");
+
       const data = res?.data?.data || res?.data || {};
-      setCurrentAvatar(
-        buildImageUrl(data.profile_image || data.avatar_url || currentAvatar)
-      );
+      const newAvatarUrl = data.profile_image || data.avatar_url;
+
+      if (newAvatarUrl) {
+        setCurrentAvatar(buildImageUrl(newAvatarUrl));
+      }
+      // clear file input
+      setImageFile(null);
     } catch (err) {
       console.error("Error uploading image:", err);
-      setError(
-        err.response?.data?.error ||
-          err.message ||
-          "Failed to upload image. Please try again."
-      );
+      setError("Failed to upload image. Please check file size and type.");
     } finally {
       setSaving(false);
     }
@@ -125,7 +147,7 @@ export default function EditProfile() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-900 to-slate-900">
-        <p className="text-lg text-gray-200">Loading profile...</p>
+        <p className="text-lg text-gray-200 animate-pulse">Loading...</p>
       </div>
     );
   }
@@ -133,147 +155,156 @@ export default function EditProfile() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-900 to-slate-900 py-10 px-4">
       <div className="max-w-4xl mx-auto">
-        <div className="mb-6 flex items-center justify-between gap-4">
+        <div className="mb-8 flex items-center justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold text-blue-400 tracking-[0.25em] mb-2">
-              EDIT PROFILE
+            <p className="text-xs font-bold text-blue-400 tracking-[0.25em] mb-2 uppercase">
+              Profile Settings
             </p>
             <h1 className="text-3xl md:text-4xl font-bold text-white">
-              Personal Details
+              Edit My Profile
             </h1>
-            <p className="text-gray-400 mt-2 text-sm md:text-base max-w-2xl">
-              Update the information architects use to understand who you are
-              and where your projects are based.
-            </p>
           </div>
           <button
             onClick={() => navigate("/client/profile")}
-            className="hidden sm:inline-flex items-center px-4 py-2.5 rounded-xl bg-gray-800 text-gray-200 text-sm font-semibold border border-gray-700 hover:bg-gray-700 transition-all duration-200"
+            className="hidden sm:inline-flex items-center px-4 py-2.5 rounded-xl bg-gray-800 text-gray-300 text-sm font-semibold border border-transparent hover:bg-gray-700 hover:text-white transition-all duration-200"
           >
             Back to profile
           </button>
         </div>
 
         {error && (
-          <div className="mb-4 bg-red-500/10 border border-red-500/40 text-red-200 px-4 py-3 rounded-xl">
-            <p className="font-semibold mb-1">There was a problem</p>
-            <p className="text-sm">{error}</p>
+          <div className="mb-6 bg-red-500/10 border border-red-500/20 text-red-200 px-6 py-4 rounded-xl flex items-center gap-3">
+            <svg className="w-6 h-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <p className="font-bold">Error</p>
+              <p className="text-sm">{error}</p>
+            </div>
           </div>
         )}
 
         {success && (
-          <div className="mb-4 bg-emerald-500/10 border border-emerald-500/40 text-emerald-200 px-4 py-3 rounded-xl">
-            <p className="font-semibold mb-1">Success</p>
-            <p className="text-sm">{success}</p>
+          <div className="mb-6 bg-emerald-500/10 border border-emerald-500/20 text-emerald-200 px-6 py-4 rounded-xl flex items-center gap-3">
+            <svg className="w-6 h-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+            </svg>
+            <div>
+              <p className="font-bold">Success</p>
+              <p className="text-sm">{success}</p>
+            </div>
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Avatar / image upload */}
           <div className="lg:col-span-1">
-            <div className="bg-gray-900/80 border border-gray-700 rounded-2xl p-6 shadow-xl flex flex-col items-center">
-              <div className="relative mb-4">
-                <div className="w-28 h-28 rounded-full bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-500 p-1 shadow-xl">
+            <div className="bg-gray-800/40 border border-gray-700/50 rounded-2xl p-6 shadow-xl flex flex-col items-center backdrop-blur-sm sticky top-6">
+              <div className="relative mb-6">
+                <div className="w-32 h-32 rounded-full bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-500 p-1 shadow-lg">
                   <div className="w-full h-full rounded-full bg-gray-900 flex items-center justify-center overflow-hidden">
                     {currentAvatar ? (
                       <img
                         src={currentAvatar}
                         alt="Current avatar"
                         className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.target.style.display = "none";
-                        }}
                       />
                     ) : (
-                      <span className="text-3xl font-semibold text-white">
+                      <span className="text-4xl font-semibold text-white">
                         {profile.first_name
                           ? profile.first_name.charAt(0).toUpperCase()
-                          : "C"}
+                          : "U"}
                       </span>
                     )}
                   </div>
                 </div>
               </div>
 
-              <h2 className="text-base font-semibold text-white mb-2">
-                Profile image
+              <h2 className="text-base font-bold text-white mb-2">
+                Profile Photo
               </h2>
-              <p className="text-xs text-gray-400 text-center mb-4">
-                This helps your architects quickly recognize who they&apos;re
-                collaborating with.
-              </p>
 
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setImageFile(e.target.files[0] || null)}
-                className="mb-3 w-full text-xs text-gray-300 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-blue-600 file:text-white hover:file:bg-blue-500"
-              />
+              <div className="w-full mt-4">
+                <label className="block w-full cursor-pointer group">
+                  <span className="sr-only">Choose profile photo</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      if (e.target.files?.[0]) {
+                        setImageFile(e.target.files[0]);
+                        setError(null);
+                      }
+                    }}
+                    className="block w-full text-xs text-gray-400
+                          file:mr-4 file:py-2 file:px-4
+                          file:rounded-full file:border-0
+                          file:text-xs file:font-semibold
+                          file:bg-blue-600 file:text-white
+                          hover:file:bg-blue-500
+                        "
+                  />
+                </label>
 
-              <button
-                onClick={handleUpload}
-                disabled={saving || !imageFile}
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2.5 rounded-xl hover:from-blue-500 hover:to-indigo-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-sm font-medium transition-all duration-200"
-              >
-                {saving ? "Uploading..." : "Upload Image"}
-              </button>
+                {imageFile && (
+                  <div className="mt-4 animate-in fade-in slide-in-from-top-2">
+                    <p className="text-xs text-gray-300 mb-2 truncate text-center">
+                      Selected: {imageFile.name}
+                    </p>
+                    <button
+                      onClick={handleUpload}
+                      disabled={saving}
+                      className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-500 disabled:bg-gray-700 text-sm font-medium transition-all"
+                    >
+                      {saving ? "Uploading..." : "Confirm Upload"}
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
           {/* Main form */}
           <div className="lg:col-span-2">
-            <div className="bg-gray-900/80 border border-gray-700 rounded-2xl p-6 shadow-xl">
-              <h3 className="text-sm font-semibold text-gray-300 tracking-[0.25em] mb-4">
-                BASIC INFORMATION
+            <div className="bg-gray-800/40 border border-gray-700/50 rounded-2xl p-8 shadow-xl backdrop-blur-sm">
+              <h3 className="text-sm font-bold text-gray-400 tracking-widest uppercase mb-6 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+                Basic Information
               </h3>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block mb-1 text-xs font-medium text-gray-300">
+                  <label className="block mb-2 text-xs font-semibold uppercase text-gray-400">
                     First Name
                   </label>
                   <input
                     type="text"
                     name="first_name"
-                    placeholder="First name"
+                    placeholder="e.g. John"
                     value={profile.first_name}
                     onChange={handleChange}
-                    className="border border-gray-700 bg-gray-800/60 text-white text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block w-full px-3 py-2"
+                    className="w-full bg-gray-900/50 border border-gray-700 text-white text-sm rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block px-4 py-3 transition-all"
                   />
                 </div>
 
                 <div>
-                  <label className="block mb-1 text-xs font-medium text-gray-300">
+                  <label className="block mb-2 text-xs font-semibold uppercase text-gray-400">
                     Last Name
                   </label>
                   <input
                     type="text"
                     name="last_name"
-                    placeholder="Last name"
+                    placeholder="e.g. Doe"
                     value={profile.last_name}
                     onChange={handleChange}
-                    className="border border-gray-700 bg-gray-800/60 text-white text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block w-full px-3 py-2"
+                    className="w-full bg-gray-900/50 border border-gray-700 text-white text-sm rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block px-4 py-3 transition-all"
                   />
                 </div>
               </div>
 
-              <div className="mt-5">
-                <label className="block mb-1 text-xs font-medium text-gray-300">
-                  Bio
-                </label>
-                <textarea
-                  name="bio"
-                  placeholder="Share a short summary about your background, interests, or the type of projects you take on."
-                  value={profile.bio}
-                  onChange={handleChange}
-                  className="border border-gray-700 bg-gray-800/60 text-white text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block w-full px-3 py-2 min-h-[96px] resize-vertical"
-                  rows="4"
-                />
-              </div>
-
-              <div className="mt-5">
-                <label className="block mb-1 text-xs font-medium text-gray-300">
-                  Location
+              <div className="mt-6">
+                <label className="block mb-2 text-xs font-semibold uppercase text-gray-400">
+                  Current Location
                 </label>
                 <input
                   type="text"
@@ -281,21 +312,39 @@ export default function EditProfile() {
                   placeholder="City, Country"
                   value={profile.location}
                   onChange={handleChange}
-                  className="border border-gray-700 bg-gray-800/60 text-white text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block w-full px-3 py-2"
+                  className="w-full bg-gray-900/50 border border-gray-700 text-white text-sm rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block px-4 py-3 transition-all"
                 />
               </div>
 
-              <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <p className="text-xs text-gray-500 max-w-sm">
-                  Your profile information is visible to professionals you work
-                  with on projects.
+              <div className="mt-6">
+                <label className="block mb-2 text-xs font-semibold uppercase text-gray-400">
+                  Bio / Summary
+                </label>
+                <textarea
+                  name="bio"
+                  placeholder="Tell us a little about yourself..."
+                  value={profile.bio}
+                  onChange={handleChange}
+                  className="w-full bg-gray-900/50 border border-gray-700 text-white text-sm rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block px-4 py-3 min-h-[120px] resize-y transition-all"
+                />
+                <p className="mt-2 text-xs text-gray-500">
+                  Short description for your public profile.
                 </p>
+              </div>
+
+              <div className="mt-8 pt-6 border-t border-gray-700 flex flex-col sm:flex-row sm:items-center justify-end gap-4">
+                <button
+                  onClick={() => navigate("/client/profile")}
+                  className="px-6 py-2.5 rounded-xl text-gray-400 hover:text-white text-sm font-medium transition-colors"
+                >
+                  Cancel
+                </button>
                 <button
                   onClick={handleUpdate}
                   disabled={saving}
-                  className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-semibold shadow-lg shadow-emerald-500/30 hover:from-emerald-400 hover:to-teal-400 disabled:bg-gray-700 disabled:cursor-not-allowed transition-all duration-200"
+                  className="px-8 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-bold shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-200"
                 >
-                  {saving ? "Saving..." : "Save changes"}
+                  {saving ? "Saving Changes..." : "Save Profile"}
                 </button>
               </div>
             </div>

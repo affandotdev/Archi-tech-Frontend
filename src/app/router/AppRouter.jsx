@@ -22,9 +22,21 @@ import ClientDashboard from "../../pages/client/ClientDashboard";
 import AdminDashboard from "../../pages/admin/AdminDashboard";
 import EngineerDashboard from "../../pages/engineer/Dashboard";
 import AdminUsers from "../../pages/admin/AdminUsers";
+import AdminUserDetail from "../../pages/admin/AdminUserDetail";
 import AdminSettings from "../../pages/admin/AdminSettings";
+
+// Client Profile
 import Profile from "../../pages/client/Profile";
 import EditProfile from "../../pages/client/EditProfile";
+
+// Architect Profile
+import ArchitectProfile from "../../pages/architect/ArchitectProfile";
+import EditArchitectProfile from "../../pages/architect/EditArchitectProfile";
+
+// Engineer Profile
+import EngineerProfile from '../../pages/engineer/EngineerProfile';
+import EditEngineerProfile from "../../pages/engineer/EditEngineerProfile";
+
 export default function AppRouter() {
   return (
     <BrowserRouter>
@@ -36,24 +48,35 @@ export default function AppRouter() {
         <Route path="/oauth-login" element={<OAuthLogin />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/logout" element={<ProtectedRoute><LogoutButton/></ProtectedRoute>} />
+        <Route path="/logout" element={<ProtectedRoute><LogoutButton /></ProtectedRoute>} />
         <Route path="/mfa-setup" element={<ProtectedRoute><MFASetup /></ProtectedRoute>} />
         <Route path="/mfa-verify" element={<ProtectedRoute><MFAVerify /></ProtectedRoute>} />
         <Route path="/mfa-login-verify" element={<MFALoginVerify />} />
         <Route path="/mfa-qr-scanner" element={<ProtectedRoute><MFAQRScanner /></ProtectedRoute>} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         {/* Role-specific dashboards */}
-  
+
         <Route path="/architect/dashboard" element={<ProtectedRoute requiredRole="architect"><ArchitectDashboard /></ProtectedRoute>} />
         <Route path="/engineer/dashboard" element={<ProtectedRoute requiredRole="engineer"><EngineerDashboard /></ProtectedRoute>} />
         <Route path="/client/dashboard" element={<ProtectedRoute requiredRole="client"><ClientDashboard /></ProtectedRoute>} />
         <Route path="/admin/dashboard" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
         <Route path="/admin/users" element={<ProtectedRoute requiredRole="admin"><AdminUsers /></ProtectedRoute>} />
+        <Route path="/admin/users/:userId" element={<ProtectedRoute requiredRole="admin"><AdminUserDetail /></ProtectedRoute>} />
         <Route path="/admin/settings" element={<ProtectedRoute requiredRole="admin"><AdminSettings /></ProtectedRoute>} />
-        <Route path="/client/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-        <Route path="/client/edit-profile" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
-       
-        
+
+        {/* Client Profile Routes */}
+        <Route path="/client/profile" element={<ProtectedRoute requiredRole="client"><Profile /></ProtectedRoute>} />
+        <Route path="/client/edit-profile" element={<ProtectedRoute requiredRole="client"><EditProfile /></ProtectedRoute>} />
+
+        {/* Architect Profile Routes */}
+        <Route path="/architect/profile" element={<ProtectedRoute requiredRole="architect"><ArchitectProfile /></ProtectedRoute>} />
+        <Route path="/architect/edit-profile" element={<ProtectedRoute requiredRole="architect"><EditArchitectProfile /></ProtectedRoute>} />
+
+        {/* Engineer Profile Routes */}
+        <Route path="/engineer/profile" element={<ProtectedRoute requiredRole="engineer"><EngineerProfile /></ProtectedRoute>} />
+        <Route path="/engineer/edit-profile" element={<ProtectedRoute requiredRole="engineer"><EditEngineerProfile /></ProtectedRoute>} />
+
+
       </Routes>
     </BrowserRouter>
   );

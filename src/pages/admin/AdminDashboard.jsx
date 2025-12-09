@@ -2,14 +2,20 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import LogoutButton from "../auth/Logout Button";
 import { useAuth } from "../../context/AuthContext";
+import { getDashboardStats, getSystemHealth } from "../../services/AdminService";
 
 export default function AdminDashboard() {
   const { user: authUser, role } = useAuth();
-  const [stats] = useState({
-    totalUsers: 128,
-    activeSessions: 23,
-    openIncidents: 2,
+  /* 
+   * Enhanced Admin Dashboard with real data fetching
+   */
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    activeSessions: 0,
+    openIncidents: 0,
   });
+  const [health, setHealth] = useState(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -19,14 +25,31 @@ export default function AdminDashboard() {
       return;
     }
 
-    // Verify user has the correct role
     if (role !== "admin") {
-      // Redirect to appropriate dashboard based on actual role
       if (role === "architect") navigate("/architect/dashboard");
       else if (role === "engineer") navigate("/engineer/dashboard");
       else navigate("/client/dashboard");
       return;
     }
+
+    // Load data
+    const loadDashboardData = async () => {
+      try {
+        setLoading(true);
+        const [statsRes, healthRes] = await Promise.all([
+          getDashboardStats(),
+          getSystemHealth()
+        ]);
+        setStats(statsRes.data);
+        setHealth(healthRes.data);
+      } catch (err) {
+        console.error("Failed to load admin dashboard data", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDashboardData();
   }, [navigate, role]);
 
   return (
@@ -140,8 +163,8 @@ export default function AdminDashboard() {
                     <p className="text-base font-semibold text-white">
                       {authUser
                         ? (authUser.firstName && authUser.lastName
-                            ? `${authUser.firstName} ${authUser.lastName}`
-                            : authUser.email?.split("@")[0] || "Admin User")
+                          ? `${authUser.firstName} ${authUser.lastName}`
+                          : authUser.email?.split("@")[0] || "Admin User")
                         : "Admin User"}
                     </p>
                     <p className="text-xs text-slate-400 mt-2">Email</p>
@@ -177,29 +200,39 @@ export default function AdminDashboard() {
                 <h3 className="text-sm font-semibold tracking-[0.25em] text-slate-300 mb-4">
                   SYSTEM OVERVIEW
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                  <div className="bg-slate-900/70 rounded-xl p-4 border border-slate-800">
-                    <p className="text-slate-400 mb-1">Auth Service</p>
-                    <p className="text-emerald-300 font-semibold">Healthy</p>
-                    <p className="text-[11px] text-slate-500 mt-1">
-                      Last check: 2 min ago.
-                    </p>
+                {loading ? (
+                  <div className="text-slate-400 text-xs animate-pulse">Checking system vitals...</div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                    <div className="bg-slate-900/70 rounded-xl p-4 border border-slate-800">
+                      <p className="text-slate-400 mb-1">Auth Service</p>
+                      <p className={`${health?.auth === "Healthy" ? "text-emerald-300" : "text-red-400"} font-semibold`}>
+                        {health?.auth || "Unknown"}
+                      </p>
+                      <p className="text-[11px] text-slate-500 mt-1">
+                        Last check: Just now.
+                      </p>
+                    </div>
+                    <div className="bg-slate-900/70 rounded-xl p-4 border border-slate-800">
+                      <p className="text-slate-400 mb-1">User Service</p>
+                      <p className={`${health?.user === "Healthy" ? "text-emerald-300" : "text-amber-400"} font-semibold`}>
+                        {health?.user || "Unknown"}
+                      </p>
+                      <p className="text-[11px] text-slate-500 mt-1">
+                        Syncs profiles and roles.
+                      </p>
+                    </div>
+                    <div className="bg-slate-900/70 rounded-xl p-4 border border-slate-800">
+                      <p className="text-slate-400 mb-1">Notifications</p>
+                      <p className={`${health?.notifications === "Operational" ? "text-emerald-300" : "text-amber-400"} font-semibold`}>
+                        {health?.notifications || "Unknown"}
+                      </p>
+                      <p className="text-[11px] text-slate-500 mt-1">
+                        Queues check complete.
+                      </p>
+                    </div>
                   </div>
-                  <div className="bg-slate-900/70 rounded-xl p-4 border border-slate-800">
-                    <p className="text-slate-400 mb-1">User Service</p>
-                    <p className="text-emerald-300 font-semibold">Healthy</p>
-                    <p className="text-[11px] text-slate-500 mt-1">
-                      Syncs profiles and roles.
-                    </p>
-                  </div>
-                  <div className="bg-slate-900/70 rounded-xl p-4 border border-slate-800">
-                    <p className="text-slate-400 mb-1">Notifications</p>
-                    <p className="text-amber-300 font-semibold">Minor delays</p>
-                    <p className="text-[11px] text-slate-500 mt-1">
-                      Queues clearing normally.
-                    </p>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
 

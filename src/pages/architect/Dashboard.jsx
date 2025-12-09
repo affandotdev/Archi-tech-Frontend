@@ -164,9 +164,9 @@ export default function ArchitectDashboard() {
                       </p>
                       <p className="text-base font-semibold text-white">
                         {authUser
-                          ? (authUser.firstName && authUser.lastName 
-                              ? `${authUser.firstName} ${authUser.lastName}`
-                              : authUser.email?.split("@")[0] || "Architect User")
+                          ? (authUser.firstName && authUser.lastName
+                            ? `${authUser.firstName} ${authUser.lastName}`
+                            : authUser.email?.split("@")[0] || "Architect User")
                           : "Architect User"}
                       </p>
                       <p className="text-xs text-slate-400 mt-1">
@@ -314,6 +314,30 @@ export default function ArchitectDashboard() {
                       </p>
                       <p className="text-xs text-slate-400">
                         Set up a session with engineers and client.
+                      </p>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => navigate("/architect/profile")}
+                    className="w-full flex items-center p-4 bg-slate-900/60 hover:bg-slate-900 rounded-xl border border-slate-800 transition-all duration-200 group"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-indigo-900/40 flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                      <svg
+                        className="w-5 h-5 text-indigo-300"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm text-white font-medium group-hover:text-indigo-200">
+                        View Profile
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        Update your professional details.
                       </p>
                     </div>
                   </button>
