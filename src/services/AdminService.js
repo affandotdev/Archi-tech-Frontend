@@ -1,34 +1,34 @@
 
-import userHttp from "./userHttp";
+import adminHttp from "./adminHttp";
 
 export const getUsers = (search = "") => {
-    return userHttp.get(`/api/admin/users/?search=${search}`);
+    return adminHttp.get(`/api/admin/users/?search=${search}`);
 };
 
 export const getUserById = (userId) => {
-    return userHttp.get(`/api/admin/users/${userId}/`);
+    return adminHttp.get(`/api/admin/users/${userId}/`);
 };
 
 export const deleteUser = (userId) => {
-    return userHttp.delete(`/api/admin/users/${userId}/`);
+    return adminHttp.delete(`/api/admin/users/${userId}/`);
 };
 
 export const updateUserStatus = (userId, status) => {
-    return userHttp.patch(`/api/admin/users/${userId}/status/`, { status });
+    return adminHttp.patch(`/api/admin/users/${userId}/status/`, { status });
 };
 
 export const updateUserRole = (userId, role) => {
-    return userHttp.post(`/api/admin/users/${userId}/role/`, { role });
+    return adminHttp.post(`/api/admin/users/${userId}/role/`, { role });
 };
 
 export const verifyUser = (userId) => {
-    return userHttp.post(`/api/admin/users/${userId}/verify/`);
+    return adminHttp.post(`/api/admin/users/${userId}/verify/`);
 };
 
 export const getDashboardStats = () => {
-    return userHttp.get(`/api/admin/dashboard/stats/`);
+    return adminHttp.get(`/api/admin/dashboard/stats/`);
 };
 
 export const getSystemHealth = () => {
-    return userHttp.get(`/api/admin/dashboard/health/`);
+    return adminHttp.get(`/api/admin/dashboard/health/`);
 };
