@@ -18,13 +18,23 @@ export default function AdminUsers() {
       setLoading(true);
       const res = await getUsers(searchTerm);
 
+      // Handle both Array (standard) and Paginated Object (Django Rest Framework default)
+      let rawData = [];
+      if (Array.isArray(res.data)) {
+        rawData = res.data;
+      } else if (res.data && Array.isArray(res.data.results)) {
+        rawData = res.data.results;
+      }
+
       // 🔥 Remove duplicate entries (fix your conflict)
       const unique = [];
       const map = new Map();
-      for (const u of res.data) {
-        if (!map.has(u.id)) {
-          map.set(u.id, true);
-          unique.push(u);
+      for (const u of rawData) {
+        const userId = u.id || u._id;
+        if (userId && !map.has(userId)) {
+          map.set(userId, true);
+          // Ensure we have an 'id' property for the UI to use consistently
+          unique.push({ ...u, id: userId });
         }
       }
 

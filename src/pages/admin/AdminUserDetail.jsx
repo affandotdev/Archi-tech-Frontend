@@ -18,7 +18,12 @@ export default function AdminUserDetail() {
         try {
             setLoading(true);
             const res = await getUserById(userId);
-            setUser(res.data);
+            const userData = res.data;
+            // Normalize ID if missing
+            if (!userData.id && userData._id) {
+                userData.id = userData._id;
+            }
+            setUser(userData);
             setError(null);
         } catch (err) {
             console.error("Failed to load user", err);
