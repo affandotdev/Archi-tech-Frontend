@@ -36,20 +36,20 @@ export default function AdminUsers() {
     }
   };
 
-  const handleStatusToggle = async (userId, currentStatus) => {
-    const newStatus = currentStatus === "Active" ? "Suspended" : "Active";
+  const handleStatusToggle = async (userId, currentIsActive) => {
+    const newIsActive = !currentIsActive;
 
     setUsers(prev =>
-      prev.map(u => u.id === userId ? { ...u, status: newStatus } : u)
+      prev.map(u => u.id === userId ? { ...u, is_active: newIsActive } : u)
     );
 
     try {
-      await updateUserStatus(userId, newStatus);
+      await updateUserStatus(userId, newIsActive);
     } catch (err) {
       console.error("Failed to update status", err);
 
       setUsers(prev =>
-        prev.map(u => u.id === userId ? { ...u, status: currentStatus } : u)
+        prev.map(u => u.id === userId ? { ...u, is_active: currentIsActive } : u)
       );
     }
   };
@@ -120,8 +120,8 @@ export default function AdminUsers() {
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === tab
-                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/25"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+                ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/25"
+                : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
                 }`}
             >
               {tab === "all"
@@ -163,12 +163,12 @@ export default function AdminUsers() {
                     <tr
                       key={u.id}
                       className={`transition-colors ${idx % 2 === 0
-                          ? "bg-slate-900/60"
-                          : "bg-slate-900/40"
+                        ? "bg-slate-900/60"
+                        : "bg-slate-900/40"
                         } hover:bg-slate-800/50`}
                     >
                       <td className="px-6 py-3 whitespace-nowrap font-medium text-white">
-                        {u.name}
+                        {u.first_name} {u.last_name || ""}
                       </td>
                       <td className="px-6 py-3 whitespace-nowrap text-slate-300">
                         {u.email}
@@ -177,12 +177,12 @@ export default function AdminUsers() {
                       <td className="px-6 py-3 capitalize">
                         <span
                           className={`px-2 py-0.5 rounded text-[10px] uppercase tracking-wider font-bold ${u.role === "admin"
-                              ? "bg-indigo-500/20 text-indigo-300"
-                              : u.role === "architect"
-                                ? "bg-blue-500/20 text-blue-300"
-                                : u.role === "engineer"
-                                  ? "bg-emerald-500/20 text-emerald-300"
-                                  : "bg-slate-700/50 text-slate-400"
+                            ? "bg-indigo-500/20 text-indigo-300"
+                            : u.role === "architect"
+                              ? "bg-blue-500/20 text-blue-300"
+                              : u.role === "engineer"
+                                ? "bg-emerald-500/20 text-emerald-300"
+                                : "bg-slate-700/50 text-slate-400"
                             }`}
                         >
                           {u.role}
@@ -191,37 +191,37 @@ export default function AdminUsers() {
 
                       <td className="px-6 py-3">
                         <span
-                          className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium border ${u.status === "Active"
-                              ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/20"
-                              : "bg-red-500/10 text-red-300 border-red-500/20"
+                          className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium border ${u.is_active
+                            ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/20"
+                            : "bg-red-500/10 text-red-300 border-red-500/20"
                             }`}
                         >
-                          {u.status}
+                          {u.is_active ? "Active" : "Suspended"}
                         </span>
                       </td>
 
                       <td className="px-6 py-3 text-right space-x-2">
 
                         <button
-                          onClick={() => navigate(`/admin/users/${u.auth_user_id}`)}
+                          onClick={() => navigate(`/admin/users/${u.id}`)}
                           className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 transition-colors"
                         >
                           View
                         </button>
 
                         <button
-                          onClick={() => handleStatusToggle(u.auth_user_id, u.status)}
-                          className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${u.status === "Active"
-                              ? "bg-red-500/10 text-red-400 hover:bg-red-500/20"
-                              : "bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
+                          onClick={() => handleStatusToggle(u.id, u.is_active)}
+                          className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${u.is_active
+                            ? "bg-red-500/10 text-red-400 hover:bg-red-500/20"
+                            : "bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
                             }`}
                         >
-                          {u.status === "Active" ? "Suspend" : "Activate"}
+                          {u.is_active ? "Suspend" : "Activate"}
                         </button>
 
                         {/* 🔥 DELETE BUTTON */}
                         <button
-                          onClick={() => handleDeleteUser(u.auth_user_id)}
+                          onClick={() => handleDeleteUser(u.id)}
                           className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-red-600/20 text-red-300 hover:bg-red-600/30 transition-colors"
                         >
                           Delete

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getUserById, updateUserStatus, updateUserRole, deleteUser } from '../../services/AdminService';
@@ -31,19 +30,19 @@ export default function AdminUserDetail() {
 
     const handleStatusToggle = async () => {
         if (!user) return;
-        const currentStatus = user.status || "Active"; // Default if missing
-        const newStatus = currentStatus === "Active" ? "Suspended" : "Active";
+        const currentIsActive = user.is_active;
+        const newIsActive = !currentIsActive;
 
         try {
             setUpdating(true);
             // Optimistic update
-            setUser(prev => ({ ...prev, status: newStatus }));
+            setUser(prev => ({ ...prev, is_active: newIsActive }));
 
-            await updateUserStatus(user.auth_user_id, newStatus);
+            await updateUserStatus(user.id, newIsActive);
         } catch (err) {
             console.error("Failed to update status", err);
             // Revert
-            setUser(prev => ({ ...prev, status: currentStatus }));
+            setUser(prev => ({ ...prev, is_active: currentIsActive }));
             alert("Failed to update status");
         } finally {
             setUpdating(false);
@@ -58,7 +57,7 @@ export default function AdminUserDetail() {
             setUpdating(true);
             setUser(prev => ({ ...prev, role: newRole }));
 
-            await updateUserRole(user.auth_user_id, newRole);
+            await updateUserRole(user.id, newRole);
         } catch (err) {
             console.error("Failed to update role", err);
             setUser(prev => ({ ...prev, role: oldRole }));
@@ -73,7 +72,7 @@ export default function AdminUserDetail() {
 
         try {
             setUpdating(true);
-            await deleteUser(user.auth_user_id);
+            await deleteUser(user.id);
             navigate('/admin/users');
         } catch (err) {
             console.error("Failed to delete user", err);
@@ -137,11 +136,11 @@ export default function AdminUserDetail() {
                         </div>
 
                         <div className="absolute top-4 right-4 flex gap-3">
-                            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${user.status === 'Active'
-                                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                    : 'bg-red-500/10 text-red-400 border-red-500/20'
+                            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${user.is_active
+                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                : 'bg-red-500/10 text-red-400 border-red-500/20'
                                 }`}>
-                                {user.status || 'Active'}
+                                {user.is_active ? 'Active' : 'Suspended'}
                             </span>
                         </div>
                     </div>
@@ -156,9 +155,9 @@ export default function AdminUserDetail() {
                                 </h1>
                                 <p className="text-slate-400">{user.email}</p>
                                 <div className="flex items-center gap-2 mt-3 text-sm text-slate-500">
-                                    <span>ID: {user.auth_user_id}</span>
+                                    <span>ID: {user.id}</span>
                                     <span>•</span>
-                                    <span>Joined {new Date(user.created_at).toLocaleDateString()}</span>
+                                    <span>Joined {new Date(user.date_joined).toLocaleDateString()}</span>
                                 </div>
                             </div>
 
@@ -166,12 +165,12 @@ export default function AdminUserDetail() {
                                 <button
                                     disabled={updating}
                                     onClick={handleStatusToggle}
-                                    className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${user.status === 'Active'
-                                            ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20'
-                                            : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20'
+                                    className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${user.is_active
+                                        ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20'
+                                        : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20'
                                         }`}
                                 >
-                                    {user.status === 'Active' ? 'Suspend Account' : 'Activate Account'}
+                                    {user.is_active ? 'Suspend Account' : 'Activate Account'}
                                 </button>
 
                                 <button
@@ -200,8 +199,8 @@ export default function AdminUserDetail() {
                                                 onClick={() => handleRoleChange(role)}
                                                 disabled={user.role === role || updating}
                                                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider border transition-all ${user.role === role
-                                                        ? 'bg-indigo-600 text-white border-indigo-500 ring-2 ring-indigo-500/30'
-                                                        : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-slate-500'
+                                                    ? 'bg-indigo-600 text-white border-indigo-500 ring-2 ring-indigo-500/30'
+                                                    : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-slate-500'
                                                     }`}
                                             >
                                                 {role}
@@ -216,12 +215,8 @@ export default function AdminUserDetail() {
                                 <h3 className="text-lg font-semibold text-white mb-4">Profile Information</h3>
                                 <dl className="space-y-4 text-sm">
                                     <div className="grid grid-cols-3 gap-4">
-                                        <dt className="text-slate-500">Location</dt>
-                                        <dd className="col-span-2 text-slate-300">{user.location || "Not specified"}</dd>
-                                    </div>
-                                    <div className="grid grid-cols-3 gap-4">
-                                        <dt className="text-slate-500">Bio</dt>
-                                        <dd className="col-span-2 text-slate-300">{user.bio || "No bio available"}</dd>
+                                        <dt className="text-slate-500">Phone</dt>
+                                        <dd className="col-span-2 text-slate-300">{user.phone || "Not specified"}</dd>
                                     </div>
                                     <div className="grid grid-cols-3 gap-4">
                                         <dt className="text-slate-500">Verified</dt>
@@ -235,6 +230,10 @@ export default function AdminUserDetail() {
                                                 <span className="text-slate-500">Unverified</span>
                                             )}
                                         </dd>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-4">
+                                        <dt className="text-slate-500">MFA Enabled</dt>
+                                        <dd className="col-span-2 text-slate-300">{user.has_mfa ? "Yes" : "No"}</dd>
                                     </div>
                                 </dl>
                             </div>
