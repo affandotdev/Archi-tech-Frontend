@@ -22,8 +22,17 @@ export default function ProfessionVerify() {
     setStatus("");
 
     const formData = new FormData();
-    formData.append("profession", profession);
+    formData.append("requested_role", profession);
     formData.append("document", document);
+
+    const accessToken = localStorage.getItem("access");
+
+    if (!accessToken) {
+      setMessage("You are not logged in. Please log in to continue.");
+      setStatus("error");
+      setLoading(false);
+      return;
+    }
 
     try {
       await axios.post(
@@ -31,8 +40,7 @@ export default function ProfessionVerify() {
         formData,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("access")}`,
-            "Content-Type": "multipart/form-data"
+            Authorization: `Bearer ${accessToken}`
           }
         }
       );
@@ -154,8 +162,8 @@ export default function ProfessionVerify() {
             {message && (
               <div
                 className={`p-4 rounded-xl border ${status === "success"
-                    ? "bg-green-500/10 border-green-500/20 text-green-400"
-                    : "bg-red-500/10 border-red-500/20 text-red-400"
+                  ? "bg-green-500/10 border-green-500/20 text-green-400"
+                  : "bg-red-500/10 border-red-500/20 text-red-400"
                   } flex items-center`}
               >
                 {status === "success" ? (

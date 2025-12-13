@@ -306,6 +306,30 @@ export default function AdminDashboard() {
                       </p>
                     </div>
                   </button>
+
+                  <button
+                    onClick={() => navigate("/admin/profession-requests")}
+                    className="w-full flex items-center p-4 bg-slate-900/60 hover:bg-slate-900 rounded-xl border border-slate-800 transition-all duration-200 group"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-orange-900/40 flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                      <svg
+                        className="w-5 h-5 text-orange-300"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div className="text-left">
+                      <p className="text-white font-medium group-hover:text-orange-200">
+                        Profession Requests
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        Approve or reject verification requests.
+                      </p>
+                    </div>
+                  </button>
                 </div>
               </div>
             </div>

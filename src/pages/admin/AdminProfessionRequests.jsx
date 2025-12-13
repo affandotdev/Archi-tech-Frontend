@@ -129,15 +129,15 @@ export default function AdminProfessionRequests() {
               <div key={req.id} className="bg-gray-900/60 backdrop-blur-xl rounded-2xl border border-gray-700/50 p-6 shadow-xl flex flex-col md:flex-row justify-between md:items-center">
                 <div className="mb-4 md:mb-0">
                   <div className="flex items-center mb-2">
-                    <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider mr-3 ${req.profession === 'architect' ? 'bg-purple-900/50 text-purple-400 border border-purple-700' : 'bg-orange-900/50 text-orange-400 border border-orange-700'
+                    <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider mr-3 ${req.requested_role === 'architect' ? 'bg-purple-900/50 text-purple-400 border border-purple-700' : 'bg-orange-900/50 text-orange-400 border border-orange-700'
                       }`}>
-                      {req.profession}
+                      {req.requested_role}
                     </span>
                     <span className="text-gray-400 text-sm">{new Date().toLocaleDateString()}</span>
                   </div>
                   <h3 className="text-xl font-bold text-white mb-1">{req.user_email}</h3>
                   <a
-                    href={req.document_url}
+                    href={req.document}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-400 hover:text-blue-300 text-sm flex items-center mt-2 group"
@@ -167,8 +167,8 @@ export default function AdminProfessionRequests() {
                     </>
                   ) : (
                     <span className={`px-4 py-2 rounded-xl text-sm font-bold capitalize ${req.status === 'approved'
-                        ? 'bg-green-900/20 text-green-400 border border-green-800'
-                        : 'bg-red-900/20 text-red-400 border border-red-800'
+                      ? 'bg-green-900/20 text-green-400 border border-green-800'
+                      : 'bg-red-900/20 text-red-400 border border-red-800'
                       }`}>
                       {req.status}
                     </span>
