@@ -1,41 +1,35 @@
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-    getProfile,
-    updateProfile,
-    uploadProfileImage,
-} from "../../services/ProfileService";
+import { useAuth } from "../../context/AuthContext";
+import Navbar from "../../widgets/Navbar/Navbar";
+import Card from "../../shared/components/Card";
+import Input from "../../shared/components/Input";
+import Button from "../../shared/components/Button";
+import Spinner from "../../shared/components/Spinner";
+import { getProfile, updateProfile } from "../../services/ProfileService"; // Reuse existing service
 
 export default function EditArchitectProfile() {
     const [profile, setProfile] = useState({
         first_name: "",
         last_name: "",
         bio: "",
-        location: "",
+        studio: "",
+        experience_years: "",
+        license_number: "",
+        specialization: ""
     });
-    const [currentAvatar, setCurrentAvatar] = useState(null);
-    const [imageFile, setImageFile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState(null);
-    const [success, setSuccess] = useState(null);
+    const { user: authUser } = useAuth();
     const navigate = useNavigate();
-
-    const buildImageUrl = (raw) => {
-        if (!raw) return null;
-        if (typeof raw === "string" && raw.startsWith("http")) return raw;
-        const path = raw.startsWith("/") ? raw : `/${raw}`;
-        return `http://localhost:8001${path}`;
-    };
 
     useEffect(() => {
         const fetchProfile = async () => {
             try {
                 setLoading(true);
-                const response = await getProfile();
-                let data = response.data;
-                if (data.data) data = data.data;
+                const res = await getProfile();
+                let data = res.data?.data || res.data || {};
                 if (data.profile) data = { ...data, ...data.profile };
                 if (data.user) data = { ...data, ...data.user };
 
@@ -43,16 +37,13 @@ export default function EditArchitectProfile() {
                     first_name: data.first_name || "",
                     last_name: data.last_name || "",
                     bio: data.bio || "",
-                    location: data.location || "",
+                    studio: data.studio || "",
+                    experience_years: data.experience_years || "",
+                    license_number: data.license_number || "",
+                    specialization: data.specialization || ""
                 });
-
-                if (data.profile_image || data.avatar_url) {
-                    setCurrentAvatar(buildImageUrl(data.profile_image || data.avatar_url));
-                }
             } catch (err) {
-                if (err.response?.status !== 404) {
-                    setError("Failed to load existing profile.");
-                }
+                console.error("Error loading architect profile:", err);
             } finally {
                 setLoading(false);
             }
@@ -62,8 +53,6 @@ export default function EditArchitectProfile() {
 
     const handleChange = (e) => {
         setProfile({ ...profile, [e.target.name]: e.target.value });
-        setError(null);
-        setSuccess(null);
     };
 
     const handleUpdate = async () => {
@@ -71,8 +60,7 @@ export default function EditArchitectProfile() {
             setSaving(true);
             setError(null);
             await updateProfile(profile);
-            setSuccess("Profile updated successfully!");
-            setTimeout(() => navigate("/architect/profile"), 1000);
+            navigate("/architect/profile");
         } catch (err) {
             setError("Failed to update profile.");
         } finally {
@@ -80,144 +68,52 @@ export default function EditArchitectProfile() {
         }
     };
 
-    const handleUpload = async () => {
-        if (!imageFile) {
-            setError("Please select an image file first.");
-            return;
-        }
-        try {
-            setSaving(true);
-            const formData = new FormData();
-            formData.append("profile_image", imageFile);
-            const res = await uploadProfileImage(formData);
-            setSuccess("Image uploaded successfully!");
-
-            const data = res?.data?.data || res?.data || {};
-            const newAvatarUrl = data.profile_image || data.avatar_url;
-            if (newAvatarUrl) setCurrentAvatar(buildImageUrl(newAvatarUrl));
-            setImageFile(null);
-        } catch (err) {
-            setError("Failed to upload image.");
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-950 to-slate-900">
-                <p className="text-purple-200 animate-pulse">Loading...</p>
-            </div>
-        );
-    }
+    if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><Spinner size="lg" color="indigo" /></div>;
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-950 to-slate-900 py-10 px-4">
-            <div className="max-w-4xl mx-auto">
+        <div className="min-h-screen bg-slate-50">
+            <Navbar title="Architect Studio" user={authUser} />
+
+            <div className="max-w-4xl mx-auto py-8 px-4">
                 <div className="mb-8 flex items-center justify-between">
-                    <div>
-                        <p className="text-xs font-bold text-purple-400 tracking-[0.25em] mb-2 uppercase">
-                            Settings
-                        </p>
-                        <h1 className="text-3xl md:text-4xl font-bold text-white">
-                            Edit Profile
-                        </h1>
-                    </div>
-                    <button
-                        onClick={() => navigate("/architect/profile")}
-                        className="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg hover:text-white transition"
-                    >
-                        Cancel
-                    </button>
+                    <h1 className="text-3xl font-bold text-slate-800">Edit Profile</h1>
+                    <Button variant="outline" onClick={() => navigate("/architect/profile")}>Back</Button>
                 </div>
 
-                {error && <div className="mb-4 bg-red-500/20 text-red-200 p-4 rounded-xl">{error}</div>}
-                {success && <div className="mb-4 bg-emerald-500/20 text-emerald-200 p-4 rounded-xl">{success}</div>}
+                {error && (
+                    <div className="mb-6 p-4 bg-rose-50 text-rose-700 rounded-lg">{error}</div>
+                )}
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-1">
-                        <div className="bg-slate-900/50 border border-purple-500/20 rounded-2xl p-6 flex flex-col items-center">
-                            <div className="w-32 h-32 rounded-full overflow-hidden bg-slate-800 mb-4">
-                                {currentAvatar ? (
-                                    <img src={currentAvatar} alt="Avatar" className="w-full h-full object-cover" />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-slate-500 text-4xl font-bold">
-                                        {profile.first_name?.[0] || "A"}
-                                    </div>
-                                )}
-                            </div>
-                            <input
-                                type="file"
-                                onChange={(e) => setImageFile(e.target.files[0])}
-                                className="text-xs text-slate-400 mb-4 w-full"
-                            />
-                            {imageFile && (
-                                <button
-                                    onClick={handleUpload}
-                                    disabled={saving}
-                                    className="w-full py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-500 text-sm"
-                                >
-                                    {saving ? "Uploading..." : "Upload Photo"}
-                                </button>
-                            )}
-                        </div>
+                <Card title="Professional Details">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                        <Input label="First Name" name="first_name" value={profile.first_name} onChange={handleChange} />
+                        <Input label="Last Name" name="last_name" value={profile.last_name} onChange={handleChange} />
                     </div>
 
-                    <div className="lg:col-span-2">
-                        <div className="bg-slate-900/50 border border-purple-500/20 rounded-2xl p-8 space-y-6">
-                            <div className="grid grid-cols-2 gap-6">
-                                <div>
-                                    <label className="block text-xs uppercase text-slate-400 mb-2 font-semibold">First Name</label>
-                                    <input
-                                        name="first_name"
-                                        value={profile.first_name}
-                                        onChange={handleChange}
-                                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs uppercase text-slate-400 mb-2 font-semibold">Last Name</label>
-                                    <input
-                                        name="last_name"
-                                        value={profile.last_name}
-                                        onChange={handleChange}
-                                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none"
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs uppercase text-slate-400 mb-2 font-semibold">Location</label>
-                                <input
-                                    name="location"
-                                    value={profile.location}
-                                    onChange={handleChange}
-                                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs uppercase text-slate-400 mb-2 font-semibold">Bio</label>
-                                <textarea
-                                    name="bio"
-                                    value={profile.bio}
-                                    onChange={handleChange}
-                                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none min-h-[120px]"
-                                />
-                            </div>
-
-                            <div className="pt-4 flex justify-end">
-                                <button
-                                    onClick={handleUpdate}
-                                    disabled={saving}
-                                    className="px-8 py-3 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-500 transition-all shadow-lg shadow-purple-500/20"
-                                >
-                                    {saving ? "Saving..." : "Save Changes"}
-                                </button>
-                            </div>
-                        </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                        <Input label="Studio / Firm Name" name="studio" value={profile.studio} onChange={handleChange} placeholder="e.g. Skyline Architects" />
+                        <Input label="Years of Experience" name="experience_years" type="number" value={profile.experience_years} onChange={handleChange} />
                     </div>
-                </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <Input label="License Number" name="license_number" value={profile.license_number} onChange={handleChange} />
+                        <Input label="Specialization" name="specialization" value={profile.specialization} onChange={handleChange} placeholder="e.g. Residential, Commercial" />
+                    </div>
+
+                    <div className="mb-6">
+                        <label className="block mb-2 text-sm font-medium text-slate-700">Bio</label>
+                        <textarea
+                            name="bio"
+                            value={profile.bio}
+                            onChange={handleChange}
+                            className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm min-h-[120px]"
+                        />
+                    </div>
+
+                    <div className="flex justify-end pt-4 border-t border-slate-100">
+                        <Button variant="primary" onClick={handleUpdate} isLoading={saving}>Save Changes</Button>
+                    </div>
+                </Card>
             </div>
         </div>
     );

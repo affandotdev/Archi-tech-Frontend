@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import LogoutButton from "../auth/Logout Button";
 import { useAuth } from "../../context/AuthContext";
 import { getDashboardStats, getSystemHealth } from "../../services/AdminService";
+import Navbar from "../../widgets/Navbar/Navbar";
+import StatsCard from "../../widgets/DashboardWidgets/StatsCard";
+import QuickActions from "../../widgets/DashboardWidgets/QuickActions";
+import RecentActivities from "../../widgets/DashboardWidgets/RecentActivities";
 
 export default function AdminDashboard() {
   const { user: authUser, role } = useAuth();
-  /* 
-   * Enhanced Admin Dashboard with real data fetching
-   */
   const [stats, setStats] = useState({
     totalUsers: 0,
     activeSessions: 0,
@@ -32,13 +32,12 @@ export default function AdminDashboard() {
       return;
     }
 
-    // Load data
     const loadDashboardData = async () => {
       try {
         setLoading(true);
         const [statsRes, healthRes] = await Promise.all([
           getDashboardStats(),
-          getSystemHealth()
+          getSystemHealth(),
         ]);
         setStats(statsRes.data);
         setHealth(healthRes.data);
@@ -52,287 +51,115 @@ export default function AdminDashboard() {
     loadDashboardData();
   }, [navigate, role]);
 
+  const quickActions = [
+    {
+      label: "User Directory",
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 19h5v-2a3 3 0 00-5.356-1.857M9 19H4v-2a3 3 0 015.356-1.857M12 12a3 3 0 100-6 3 3 0 000 6z" />
+        </svg>
+      ),
+      onClick: () => navigate("/admin/users"),
+    },
+    {
+      label: "Platform Config",
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M10.325 4.317a1 1 0 011.35-.937l.39.13a1 1 0 00.949-.17l.518-.414a1 1 0 011.31.083l1.414 1.414a1 1 0 01.083 1.31l-.414.518a1 1 0 00-.17.949l.13.39a1 1 0 01-.937 1.35l-.403.054a1 1 0 00.89-.89l.054-.403a1 1 0 01-1.35.937l-.39-.13a1 1 0 00-.949.17l-.518.414a1 1 0 01-1.31-.083L7.05 16.95a1 1 0 01-.083-1.31l.414-.518a1 1 0 00.17-.949l-.13-.39a1 1 0 01.937-1.35l.403-.054a1 1 0 00.89-.89l.054-.403z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      ),
+      onClick: () => navigate("/admin/settings"),
+    },
+    {
+      label: "Profession Requests",
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+      onClick: () => navigate("/admin/profession-requests"),
+    },
+  ];
+
+  const systemHealthActivities = health ? [
+    {
+      title: "Auth Service",
+      time: "Just now",
+      description: `Status: ${health.auth || "Unknown"}`,
+      icon: <svg className="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+    },
+    {
+      title: "User Service",
+      time: "Just now",
+      description: `Status: ${health.user || "Unknown"} - Syncs profiles roles.`,
+      icon: <svg className="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+    },
+    {
+      title: "Notifications",
+      time: "Just now",
+      description: `Status: ${health.notifications || "Operational"} - Queues active.`,
+      icon: <svg className="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+    }
+  ] : [];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-900">
-      {/* Top nav */}
-      <nav className="bg-slate-950/90 backdrop-blur-xl border-b border-slate-800/70 shadow-2xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-20">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center">
-                <svg
-                  className="w-6 h-6 text-slate-950"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="1.8"
-                    d="M4 6h16M4 12h16M4 18h7"
-                  />
-                </svg>
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-white">
-                  <span className="bg-gradient-to-r from-indigo-300 to-violet-200 bg-clip-text text-transparent">
-                    ArchiTech
-                  </span>
-                  <span className="text-slate-300 ml-2">Admin Console</span>
-                </h1>
-                <p className="text-slate-400 text-xs">
-                  Monitor users, roles, and platform health.
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="hidden md:flex flex-col items-end text-xs text-slate-400">
-                <span className="uppercase tracking-[0.2em] text-indigo-300">
-                  Administrator
-                </span>
-                <span className="text-sm text-slate-100 font-medium">
-                  {authUser ? (authUser.firstName && authUser.lastName ? `${authUser.firstName} ${authUser.lastName}` : authUser.email?.split("@")[0] || "Admin") : "Admin"}
-                </span>
-              </div>
-              <LogoutButton />
-            </div>
-          </div>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-slate-50">
+      <Navbar title="Admin Console" user={authUser} />
 
-      {/* Main content */}
-      <div className="max-w-7xl mx-auto py-8 sm:px-6 lg:px-8">
-        {/* Welcome + stats */}
-        <div className="px-4 mb-8">
-          <div className="bg-gradient-to-r from-slate-900/80 via-slate-900/70 to-indigo-900/40 backdrop-blur-xl rounded-2xl p-7 md:p-8 border border-slate-800/70 shadow-xl">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-              <div>
-                <p className="text-xs font-semibold text-indigo-300 tracking-[0.3em] mb-2">
-                  ADMIN DASHBOARD
-                </p>
-                <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">
-                  Welcome back,{" "}
-                  <span className="bg-gradient-to-r from-indigo-300 to-violet-200 bg-clip-text text-transparent">
-                    {authUser?.firstName || authUser?.email?.split("@")[0] || "Admin"}
-                  </span>
-                </h2>
-                <p className="text-slate-300 text-sm md:text-base max-w-2xl">
-                  Get a quick overview of users, roles, and system activity, and
-                  jump straight into management tools.
-                </p>
-              </div>
-              <div className="grid grid-cols-3 gap-3 text-center text-xs">
-                <div className="bg-slate-950/70 border border-slate-800 rounded-xl px-4 py-3">
-                  <p className="text-slate-400 mb-1">Total Users</p>
-                  <p className="text-xl font-semibold text-white">
-                    {stats.totalUsers}
-                  </p>
-                </div>
-                <div className="bg-slate-950/70 border border-slate-800 rounded-xl px-4 py-3">
-                  <p className="text-slate-400 mb-1">Active Sessions</p>
-                  <p className="text-xl font-semibold text-indigo-300">
-                    {stats.activeSessions}
-                  </p>
-                </div>
-                <div className="bg-slate-950/70 border border-slate-800 rounded-xl px-4 py-3">
-                  <p className="text-slate-400 mb-1">Open Incidents</p>
-                  <p className="text-xl font-semibold text-amber-300">
-                    {stats.openIncidents}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div className="mb-8">
+          <h2 className="text-3xl font-bold text-slate-800">
+            Welcome back, {authUser?.firstName || "Admin"}
+          </h2>
+          <p className="text-slate-500 mt-2">
+            Overview of system performance and user activity.
+          </p>
         </div>
 
-        {/* Grid */}
-        <div className="px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-7">
-            {/* Left: account + quick links */}
-            <div className="lg:col-span-2 space-y-7">
-              <div className="bg-slate-950/70 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden">
-                <div className="px-6 py-5 border-b border-slate-800/80">
-                  <h3 className="text-sm font-semibold tracking-[0.25em] text-slate-300">
-                    ACCOUNT
-                  </h3>
-                </div>
-                <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-                  <div>
-                    <p className="text-xs text-slate-400 mb-1">Name</p>
-                    <p className="text-base font-semibold text-white">
-                      {authUser
-                        ? (authUser.firstName && authUser.lastName
-                          ? `${authUser.firstName} ${authUser.lastName}`
-                          : authUser.email?.split("@")[0] || "Admin User")
-                        : "Admin User"}
-                    </p>
-                    <p className="text-xs text-slate-400 mt-2">Email</p>
-                    <p className="text-sm text-slate-200">{authUser?.email || "admin@example.com"}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-400 mb-2">
-                      Admin shortcuts
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        onClick={() => navigate("/admin/users")}
-                        className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-500 transition-colors"
-                      >
-                        Manage users
-                      </button>
-                      <button
-                        onClick={() => navigate("/admin/settings")}
-                        className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-500 transition-colors"
-                      >
-                        Platform settings
-                      </button>
-                    </div>
-                    <p className="text-[11px] text-slate-500 mt-3">
-                      Use the shortcuts to quickly open user management or global
-                      configuration.
-                    </p>
-                  </div>
-                </div>
-              </div>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <StatsCard
+            title="Total Users"
+            value={stats.totalUsers}
+            color="indigo"
+            icon={
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            }
+          />
+          <StatsCard
+            title="Active Sessions"
+            value={stats.activeSessions}
+            color="emerald"
+            icon={
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            }
+          />
+          <StatsCard
+            title="Open Incidents"
+            value={stats.openIncidents}
+            color="rose"
+            icon={
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            }
+          />
+        </div>
 
-              <div className="bg-slate-950/70 border border-slate-800 rounded-2xl shadow-2xl p-6">
-                <h3 className="text-sm font-semibold tracking-[0.25em] text-slate-300 mb-4">
-                  SYSTEM OVERVIEW
-                </h3>
-                {loading ? (
-                  <div className="text-slate-400 text-xs animate-pulse">Checking system vitals...</div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                    <div className="bg-slate-900/70 rounded-xl p-4 border border-slate-800">
-                      <p className="text-slate-400 mb-1">Auth Service</p>
-                      <p className={`${health?.auth === "Healthy" ? "text-emerald-300" : "text-red-400"} font-semibold`}>
-                        {health?.auth || "Unknown"}
-                      </p>
-                      <p className="text-[11px] text-slate-500 mt-1">
-                        Last check: Just now.
-                      </p>
-                    </div>
-                    <div className="bg-slate-900/70 rounded-xl p-4 border border-slate-800">
-                      <p className="text-slate-400 mb-1">User Service</p>
-                      <p className={`${health?.user === "Healthy" ? "text-emerald-300" : "text-amber-400"} font-semibold`}>
-                        {health?.user || "Unknown"}
-                      </p>
-                      <p className="text-[11px] text-slate-500 mt-1">
-                        Syncs profiles and roles.
-                      </p>
-                    </div>
-                    <div className="bg-slate-900/70 rounded-xl p-4 border border-slate-800">
-                      <p className="text-slate-400 mb-1">Notifications</p>
-                      <p className={`${health?.notifications === "Operational" ? "text-emerald-300" : "text-amber-400"} font-semibold`}>
-                        {health?.notifications || "Unknown"}
-                      </p>
-                      <p className="text-[11px] text-slate-500 mt-1">
-                        Queues check complete.
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content Area */}
+          <div className="lg:col-span-2 space-y-8">
+            <QuickActions title="Admin Management" actions={quickActions} />
+          </div>
 
-            {/* Right: management tiles */}
-            <div className="space-y-6">
-              <div className="bg-slate-950/70 border border-slate-800 rounded-2xl shadow-2xl p-6">
-                <h3 className="text-sm font-semibold tracking-[0.25em] text-slate-300 mb-5">
-                  MANAGEMENT
-                </h3>
-                <div className="space-y-3 text-sm">
-                  <button
-                    onClick={() => navigate("/admin/users")}
-                    className="w-full flex items-center p-4 bg-slate-900/60 hover:bg-slate-900 rounded-xl border border-slate-800 transition-all duration-200 group"
-                  >
-                    <div className="w-10 h-10 rounded-lg bg-indigo-900/40 flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-                      <svg
-                        className="w-5 h-5 text-indigo-300"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="1.5"
-                          d="M15 19h5v-2a3 3 0 00-5.356-1.857M9 19H4v-2a3 3 0 015.356-1.857M12 12a3 3 0 100-6 3 3 0 000 6z"
-                        />
-                      </svg>
-                    </div>
-                    <div className="text-left">
-                      <p className="text-white font-medium group-hover:text-indigo-200">
-                        User directory
-                      </p>
-                      <p className="text-xs text-slate-400">
-                        View accounts, roles, and statuses.
-                      </p>
-                    </div>
-                  </button>
-
-                  <button
-                    onClick={() => navigate("/admin/settings")}
-                    className="w-full flex items-center p-4 bg-slate-900/60 hover:bg-slate-900 rounded-xl border border-slate-800 transition-all duration-200 group"
-                  >
-                    <div className="w-10 h-10 rounded-lg bg-emerald-900/40 flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-                      <svg
-                        className="w-5 h-5 text-emerald-300"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="1.5"
-                          d="M10.325 4.317a1 1 0 011.35-.937l.39.13a1 1 0 00.949-.17l.518-.414a1 1 0 011.31.083l1.414 1.414a1 1 0 01.083 1.31l-.414.518a1 1 0 00-.17.949l.13.39a1 1 0 01-.937 1.35l-.403.054a1 1 0 00-.89.89l-.054.403a1 1 0 01-1.35.937l-.39-.13a1 1 0 00-.949.17l-.518.414a1 1 0 01-1.31-.083L7.05 16.95a1 1 0 01-.083-1.31l.414-.518a1 1 0 00.17-.949l-.13-.39a1 1 0 01.937-1.35l.403-.054a1 1 0 00.89-.89l.054-.403z"
-                        />
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="1.5"
-                          d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                        />
-                      </svg>
-                    </div>
-                    <div className="text-left">
-                      <p className="text-white font-medium group-hover:text-emerald-200">
-                        Platform configuration
-                      </p>
-                      <p className="text-xs text-slate-400">
-                        Control security and default settings.
-                      </p>
-                    </div>
-                  </button>
-
-                  <button
-                    onClick={() => navigate("/admin/profession-requests")}
-                    className="w-full flex items-center p-4 bg-slate-900/60 hover:bg-slate-900 rounded-xl border border-slate-800 transition-all duration-200 group"
-                  >
-                    <div className="w-10 h-10 rounded-lg bg-orange-900/40 flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-                      <svg
-                        className="w-5 h-5 text-orange-300"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <div className="text-left">
-                      <p className="text-white font-medium group-hover:text-orange-200">
-                        Profession Requests
-                      </p>
-                      <p className="text-xs text-slate-400">
-                        Approve or reject verification requests.
-                      </p>
-                    </div>
-                  </button>
-                </div>
-              </div>
-            </div>
+          {/* Sidebar / Feed Area */}
+          <div className="lg:col-span-1">
+            <RecentActivities activities={systemHealthActivities} />
           </div>
         </div>
       </div>

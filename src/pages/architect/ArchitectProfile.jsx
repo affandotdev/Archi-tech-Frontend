@@ -1,12 +1,19 @@
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import Navbar from "../../widgets/Navbar/Navbar";
+import Card from "../../shared/components/Card";
+import Button from "../../shared/components/Button";
+import Spinner from "../../shared/components/Spinner";
+
+// Mock service call function for now, replace with actual service if separate
 import { getProfile } from "../../services/ProfileService";
 
 export default function ArchitectProfile() {
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const { user: authUser } = useAuth();
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -14,6 +21,7 @@ export default function ArchitectProfile() {
             try {
                 setLoading(true);
                 setError(null);
+                // Assuming getProfile fetches based on authenticated user token
                 const res = await getProfile();
 
                 let data = res.data;
@@ -23,11 +31,9 @@ export default function ArchitectProfile() {
 
                 setProfile(data);
             } catch (err) {
-                console.error("Error fetching profile:", err);
+                console.error("Error fetching architect profile:", err);
                 if (err.response?.status === 404) {
                     setError("Profile not found");
-                } else if (err.response?.status === 401) {
-                    setError("Your session has expired. Please log in again.");
                 } else {
                     setError("Failed to load profile.");
                 }
@@ -35,7 +41,6 @@ export default function ArchitectProfile() {
                 setLoading(false);
             }
         };
-
         fetchProfile();
     }, [navigate]);
 
@@ -48,147 +53,108 @@ export default function ArchitectProfile() {
 
     const formatDate = (value) => {
         if (!value) return "Not set";
-        try {
-            return new Date(value).toLocaleDateString();
-        } catch {
-            return value;
-        }
+        try { return new Date(value).toLocaleDateString(); } catch { return value; }
     };
 
     if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-950 to-slate-900">
-                <p className="text-lg text-purple-200 animate-pulse">Loading architect profile...</p>
-            </div>
-        );
+        return <div className="min-h-screen flex items-center justify-center bg-slate-50"><Spinner size="lg" color="indigo" /></div>;
     }
 
-    if (error === "Profile not found" || (error && error.toLowerCase().includes("not found"))) {
+    if (error === "Profile not found") {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-950 to-slate-900 px-4">
-                <div className="max-w-md w-full bg-slate-900/80 border border-purple-500/30 rounded-2xl shadow-2xl p-8 text-center backdrop-blur-sm">
-                    <div className="w-20 h-20 bg-purple-900/50 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <span className="text-4xl">🏛️</span>
+            <div className="min-h-screen bg-slate-50">
+                <Navbar title="Architect Studio" user={authUser} />
+                <div className="max-w-4xl mx-auto py-12 px-4 text-center">
+                    <div className="bg-white p-8 rounded-xl shadow-lg border border-slate-200">
+                        <h1 className="text-2xl font-bold text-slate-800 mb-2">Architect Profile Setup</h1>
+                        <p className="text-slate-500 mb-8 max-w-md mx-auto">
+                            Establish your professional presence.
+                        </p>
+                        <Button onClick={() => navigate("/architect/edit-profile")} variant="primary" size="lg">
+                            Create Profile
+                        </Button>
                     </div>
-                    <h1 className="text-2xl font-bold text-white mb-2">Welcome, Architect!</h1>
-                    <p className="text-purple-200/70 mb-8">
-                        Please set up your professional profile to showcase your portfolio.
-                    </p>
-                    <button
-                        onClick={() => navigate("/architect/edit-profile")}
-                        className="w-full bg-purple-600 text-white px-6 py-3.5 rounded-xl hover:bg-purple-500 transition-all font-semibold shadow-lg shadow-purple-500/20"
-                    >
-                        Create Profile
-                    </button>
                 </div>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-950 to-slate-900">
-                <div className="text-red-400">{error}</div>
             </div>
         );
     }
 
     if (!profile) return null;
-
     const avatarUrl = buildImageUrl(profile.profile_image || profile.avatar_url);
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-950 to-slate-900 py-10 px-4">
-            <div className="max-w-5xl mx-auto">
+        <div className="min-h-screen bg-slate-50">
+            <Navbar title="Architect Studio" user={authUser} />
+
+            <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
                 <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                        <p className="text-xs font-bold text-purple-400 tracking-[0.2em] mb-2 uppercase">
-                            Architect Portal
+                        <p className="text-xs font-bold text-sky-500 tracking-wider mb-1 uppercase">
+                            Architect Profile
                         </p>
-                        <h1 className="text-3xl md:text-4xl font-bold text-white">
-                            My Profile
+                        <h1 className="text-3xl font-bold text-slate-800">
+                            Professional Overview
                         </h1>
                     </div>
                     <div className="flex items-center gap-3">
-                        <button
-                            onClick={() => navigate("/architect/dashboard")}
-                            className="inline-flex items-center px-4 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-sm font-semibold border border-transparent hover:bg-slate-700 hover:text-white transition-all"
-                        >
-                            Dashboard
-                        </button>
-                        <button
-                            onClick={() => navigate("/architect/edit-profile")}
-                            className="inline-flex items-center px-5 py-2.5 rounded-xl bg-purple-600 text-white text-sm font-semibold hover:bg-purple-500 shadow-lg shadow-purple-500/20 transition-all"
-                        >
-                            Edit Profile
-                        </button>
+                        <Button variant="outline" onClick={() => navigate("/architect/dashboard")}>Dashboard</Button>
+                        <Button variant="primary" onClick={() => navigate("/architect/edit-profile")}>Edit Profile</Button>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                     <div className="lg:col-span-4 space-y-6">
-                        <div className="bg-slate-900/60 border border-purple-500/20 rounded-2xl p-8 flex flex-col items-center backdrop-blur-sm">
+                        <Card className="flex flex-col items-center p-8 border-sky-100">
                             <div className="relative mb-6">
-                                <div className="w-32 h-32 rounded-full p-1 bg-gradient-to-br from-purple-500 to-indigo-500 shadow-xl">
-                                    <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center overflow-hidden">
+                                <div className="w-32 h-32 rounded-full p-1 bg-gradient-to-br from-sky-400 to-indigo-500 shadow-xl">
+                                    <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
                                         {avatarUrl ? (
                                             <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
                                         ) : (
-                                            <span className="text-4xl font-bold text-slate-500">
+                                            <span className="text-4xl font-bold text-slate-300">
                                                 {(profile.first_name?.[0] || "A").toUpperCase()}
                                             </span>
                                         )}
                                     </div>
                                 </div>
                             </div>
-                            <h2 className="text-2xl font-bold text-white text-center">
-                                {profile.full_name || `${profile.first_name} ${profile.last_name}`.trim() || "Architect"}
-                            </h2>
-                            <p className="text-purple-400 text-sm mt-1 font-medium">
-                                {profile.location || "Location not set"}
-                            </p>
 
-                            <div className="w-full mt-6 py-4 border-t border-purple-500/20 flex justify-center">
-                                <span className="inline-block px-3 py-1 bg-purple-500/10 text-purple-300 rounded-full text-xs uppercase tracking-wider font-semibold">
-                                    Architect
-                                </span>
-                            </div>
-                        </div>
+                            <h2 className="text-2xl font-bold text-slate-800 text-center">
+                                {profile.full_name || `${profile.first_name} ${profile.last_name}`}
+                            </h2>
+                            <p className="text-sky-600 text-sm mt-1 font-medium bg-sky-50 px-3 py-1 rounded-full">
+                                {profile.studio || "Independent Architect"}
+                            </p>
+                        </Card>
                     </div>
 
                     <div className="lg:col-span-8 space-y-6">
-                        <div className="bg-slate-900/60 border border-purple-500/20 rounded-2xl p-8 backdrop-blur-sm">
-                            <h3 className="text-sm font-bold text-purple-400 tracking-widest uppercase mb-6">
-                                Professional Bio
-                            </h3>
-                            <p className="text-slate-300 leading-relaxed whitespace-pre-line">
-                                {profile.bio || "No professional bio provided yet."}
+                        <Card title="Professional Summary" className="border-sky-100">
+                            <p className="text-slate-600 leading-relaxed whitespace-pre-line">
+                                {profile.bio || "No summary provided."}
                             </p>
-                        </div>
+                        </Card>
 
-                        <div className="bg-slate-900/60 border border-purple-500/20 rounded-2xl p-8 backdrop-blur-sm">
-                            <h3 className="text-sm font-bold text-purple-400 tracking-widest uppercase mb-6">
-                                Details
-                            </h3>
+                        <Card title="Details" className="border-sky-100">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6">
                                 <div>
-                                    <p className="text-xs text-slate-500 mb-1">First Name</p>
-                                    <p className="text-white font-medium">{profile.first_name}</p>
+                                    <p className="text-xs text-slate-400 uppercase font-semibold mb-1">Experience</p>
+                                    <p className="text-base text-slate-700 font-medium">{profile.experience_years ? `${profile.experience_years} Years` : "—"}</p>
                                 </div>
                                 <div>
-                                    <p className="text-xs text-slate-500 mb-1">Last Name</p>
-                                    <p className="text-white font-medium">{profile.last_name}</p>
+                                    <p className="text-xs text-slate-400 uppercase font-semibold mb-1">License No.</p>
+                                    <p className="text-base text-slate-700 font-medium">{profile.license_number || "—"}</p>
                                 </div>
                                 <div>
-                                    <p className="text-xs text-slate-500 mb-1">Email</p>
-                                    <p className="text-white font-medium">{profile.email}</p>
+                                    <p className="text-xs text-slate-400 uppercase font-semibold mb-1">Specialization</p>
+                                    <p className="text-base text-slate-700 font-medium">{profile.specialization || "General"}</p>
                                 </div>
                                 <div>
-                                    <p className="text-xs text-slate-500 mb-1">Joined</p>
-                                    <p className="text-white font-medium">{formatDate(profile.created_at)}</p>
+                                    <p className="text-xs text-slate-400 uppercase font-semibold mb-1">Contact</p>
+                                    <p className="text-base text-slate-700 font-medium">{profile.contact_email || profile.email || "—"}</p>
                                 </div>
                             </div>
-                        </div>
+                        </Card>
                     </div>
                 </div>
             </div>

@@ -1,13 +1,26 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getUsers, updateUserStatus, deleteUser } from '../../services/AdminService';
+import { useAuth } from "../../context/AuthContext";
+import Navbar from "../../widgets/Navbar/Navbar";
+import Card from "../../shared/components/Card";
+import Button from "../../shared/components/Button";
+import Input from "../../shared/components/Input";
+import Modal from "../../shared/components/Modal";
+import Spinner from "../../shared/components/Spinner";
 
 export default function AdminUsers() {
   const navigate = useNavigate();
+  const { user: authUser } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
+
+  // Modal State
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -17,8 +30,6 @@ export default function AdminUsers() {
     try {
       setLoading(true);
       const res = await getUsers(searchTerm);
-
-      // Handle both Array (standard) and Paginated Object (Django Rest Framework default)
       let rawData = [];
       if (Array.isArray(res.data)) {
         rawData = res.data;
@@ -26,18 +37,15 @@ export default function AdminUsers() {
         rawData = res.data.results;
       }
 
-      // 🔥 Remove duplicate entries (fix your conflict)
       const unique = [];
       const map = new Map();
       for (const u of rawData) {
         const userId = u.id || u._id;
         if (userId && !map.has(userId)) {
           map.set(userId, true);
-          // Ensure we have an 'id' property for the UI to use consistently
           unique.push({ ...u, id: userId });
         }
       }
-
       setUsers(unique);
     } catch (err) {
       console.error("Failed to fetch users", err);
@@ -48,37 +56,33 @@ export default function AdminUsers() {
 
   const handleStatusToggle = async (userId, currentIsActive) => {
     const newIsActive = !currentIsActive;
-
-    setUsers(prev =>
-      prev.map(u => u.id === userId ? { ...u, is_active: newIsActive } : u)
-    );
-
+    setUsers(prev => prev.map(u => u.id === userId ? { ...u, is_active: newIsActive } : u));
     try {
       await updateUserStatus(userId, newIsActive);
     } catch (err) {
       console.error("Failed to update status", err);
-
-      setUsers(prev =>
-        prev.map(u => u.id === userId ? { ...u, is_active: currentIsActive } : u)
-      );
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, is_active: currentIsActive } : u));
     }
   };
 
-  // 🔥 DELETE USER HANDLER
-  const handleDeleteUser = async (userId) => {
-    if (!window.confirm("Are you sure you want to delete this user?")) return;
+  const confirmDelete = (user) => {
+    setUserToDelete(user);
+    setIsDeleteModalOpen(true);
+  };
 
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+    setIsDeleting(true);
     try {
-      await deleteUser(userId);
-
-      // Remove from UI instantly
-      setUsers(prev => prev.filter(u => u.id !== userId));
-
-      // Refresh from backend to avoid mismatches
-      fetchUsers();
+      await deleteUser(userToDelete.id);
+      setUsers(prev => prev.filter(u => u.id !== userToDelete.id));
+      setIsDeleteModalOpen(false);
+      setUserToDelete(null);
     } catch (err) {
       console.error("Failed to delete user", err);
       alert("Failed to delete user");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -88,155 +92,132 @@ export default function AdminUsers() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-900 py-8 px-4">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-slate-50">
+      <Navbar title="Admin Console" user={authUser} />
 
+      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
           <div>
-            <p className="text-xs font-semibold text-indigo-300 tracking-[0.3em] mb-2">
-              ADMIN • USERS
+            <p className="text-xs font-bold text-indigo-500 tracking-wider mb-1 uppercase">
+              Directory
             </p>
-            <h1 className="text-2xl md:text-3xl font-bold text-white">
-              User directory
+            <h1 className="text-3xl font-bold text-slate-800">
+              User Management
             </h1>
-            <p className="text-slate-400 text-sm mt-1">
-              View accounts and their roles across the platform.
-            </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <input
-              type="text"
-              placeholder="Search users..."
-              className="bg-slate-900/50 border border-slate-700 text-slate-200 text-sm rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none w-full md:w-64"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-
-            <button
+          <div className="flex items-center gap-3 w-full md:w-auto">
+            <div className="w-full md:w-64">
+              <Input
+                type="text"
+                placeholder="Search users..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="mb-0" // Reset standard input margin
+              />
+            </div>
+            <Button
+              variant="outline"
               onClick={() => navigate("/admin/dashboard")}
-              className="hidden sm:inline-flex items-center px-4 py-2.5 rounded-xl bg-slate-900 text-slate-200 text-sm font-semibold border border-slate-700 hover:bg-slate-800 transition-all duration-200"
             >
               Back
-            </button>
+            </Button>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex space-x-1 bg-slate-900/50 p-1 rounded-xl mb-6 w-fit border border-slate-800">
+        <div className="flex space-x-1 bg-white p-1 rounded-xl mb-6 w-fit border border-slate-200 shadow-sm">
           {["all", "architect", "engineer", "client"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === tab
-                ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/25"
-                : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === tab
+                  ? "bg-indigo-600 text-white shadow-md"
+                  : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
                 }`}
             >
-              {tab === "all"
-                ? "All Users"
-                : tab.charAt(0).toUpperCase() + tab.slice(1) + "s"}
+              {tab === "all" ? "All Users" : tab.charAt(0).toUpperCase() + tab.slice(1) + "s"}
             </button>
           ))}
         </div>
 
-        {/* Table */}
-        <div className="bg-slate-950/70 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden">
+        {/* User Table */}
+        <Card className="overflow-hidden border-indigo-100 p-0">
           <div className="overflow-x-auto">
-            <table className="min-w-full text-sm text-left text-slate-200">
-              <thead className="bg-slate-900/80 text-xs uppercase text-slate-400">
+            <table className="min-w-full text-sm text-left">
+              <thead className="bg-slate-50 text-xs uppercase text-slate-500 font-semibold">
                 <tr>
-                  <th className="px-6 py-3">Name</th>
-                  <th className="px-6 py-3">Email</th>
-                  <th className="px-6 py-3">Role</th>
-                  <th className="px-6 py-3">Status</th>
-                  <th className="px-6 py-3 text-right">Actions</th>
+                  <th className="px-6 py-4">Name</th>
+                  <th className="px-6 py-4">Email</th>
+                  <th className="px-6 py-4">Role</th>
+                  <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
-
-              <tbody>
+              <tbody className="divide-y divide-slate-100">
                 {loading ? (
                   <tr>
-                    <td colSpan="5" className="text-center py-8 text-slate-500 animate-pulse">
-                      Loading users...
+                    <td colSpan="5" className="px-6 py-12 text-center">
+                      <div className="flex justify-center"><Spinner color="indigo" /></div>
                     </td>
                   </tr>
                 ) : filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="text-center py-8 text-slate-500">
+                    <td colSpan="5" className="px-6 py-12 text-center text-slate-400">
                       No users found.
                     </td>
                   </tr>
                 ) : (
-                  filteredUsers.map((u, idx) => (
-                    <tr
-                      key={u.id}
-                      className={`transition-colors ${idx % 2 === 0
-                        ? "bg-slate-900/60"
-                        : "bg-slate-900/40"
-                        } hover:bg-slate-800/50`}
-                    >
-                      <td className="px-6 py-3 whitespace-nowrap font-medium text-white">
+                  filteredUsers.map((u) => (
+                    <tr key={u.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-6 py-4 font-medium text-slate-800">
                         {u.first_name} {u.last_name || ""}
                       </td>
-                      <td className="px-6 py-3 whitespace-nowrap text-slate-300">
+                      <td className="px-6 py-4 text-slate-500">
                         {u.email}
                       </td>
-
-                      <td className="px-6 py-3 capitalize">
-                        <span
-                          className={`px-2 py-0.5 rounded text-[10px] uppercase tracking-wider font-bold ${u.role === "admin"
-                            ? "bg-indigo-500/20 text-indigo-300"
-                            : u.role === "architect"
-                              ? "bg-blue-500/20 text-blue-300"
-                              : u.role === "engineer"
-                                ? "bg-emerald-500/20 text-emerald-300"
-                                : "bg-slate-700/50 text-slate-400"
-                            }`}
-                        >
+                      <td className="px-6 py-4">
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] uppercase tracking-wider font-bold border ${u.role === "admin" ? "bg-purple-50 text-purple-600 border-purple-100"
+                            : u.role === "architect" ? "bg-sky-50 text-sky-600 border-sky-100"
+                              : u.role === "engineer" ? "bg-emerald-50 text-emerald-600 border-emerald-100"
+                                : "bg-slate-100 text-slate-500 border-slate-200"
+                          }`}>
                           {u.role}
                         </span>
                       </td>
-
-                      <td className="px-6 py-3">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium border ${u.is_active
-                            ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/20"
-                            : "bg-red-500/10 text-red-300 border-red-500/20"
-                            }`}
-                        >
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border ${u.is_active
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                            : "bg-rose-50 text-rose-700 border-rose-100"
+                          }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${u.is_active ? "bg-emerald-500" : "bg-rose-500"}`}></span>
                           {u.is_active ? "Active" : "Suspended"}
                         </span>
                       </td>
-
-                      <td className="px-6 py-3 text-right space-x-2">
-
-                        <button
+                      <td className="px-6 py-4 text-right space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => navigate(`/admin/users/${u.id}`)}
-                          className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 transition-colors"
                         >
                           View
-                        </button>
-
-                        <button
+                        </Button>
+                        <Button
+                          variant={u.is_active ? "danger" : "secondary"}
+                          size="sm"
                           onClick={() => handleStatusToggle(u.id, u.is_active)}
-                          className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${u.is_active
-                            ? "bg-red-500/10 text-red-400 hover:bg-red-500/20"
-                            : "bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
-                            }`}
                         >
                           {u.is_active ? "Suspend" : "Activate"}
-                        </button>
-
-                        {/* 🔥 DELETE BUTTON */}
-                        <button
-                          onClick={() => handleDeleteUser(u.id)}
-                          className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-red-600/20 text-red-300 hover:bg-red-600/30 transition-colors"
+                        </Button>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={() => confirmDelete(u)}
+                          className="bg-rose-50 text-rose-600 hover:bg-rose-100 border-transparent"
                         >
                           Delete
-                        </button>
-
+                        </Button>
                       </td>
                     </tr>
                   ))
@@ -244,8 +225,31 @@ export default function AdminUsers() {
               </tbody>
             </table>
           </div>
-        </div>
+        </Card>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        title="Delete User"
+      >
+        <div className="space-y-4">
+          <p className="text-slate-600">
+            Are you sure you want to permanently delete
+            <span className="font-semibold text-slate-900"> {userToDelete?.first_name} {userToDelete?.last_name}</span>?
+            This action cannot be undone.
+          </p>
+          <div className="flex justify-end gap-3 pt-4">
+            <Button variant="ghost" onClick={() => setIsDeleteModalOpen(false)} disabled={isDeleting}>
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={handleDeleteUser} isLoading={isDeleting}>
+              Delete User
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

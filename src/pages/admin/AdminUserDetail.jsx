@@ -1,14 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getUserById, updateUserStatus, updateUserRole, deleteUser } from '../../services/AdminService';
+import { useAuth } from "../../context/AuthContext";
+import Navbar from "../../widgets/Navbar/Navbar";
+import Card from "../../shared/components/Card";
+import Button from "../../shared/components/Button";
+import Spinner from "../../shared/components/Spinner";
+import Modal from "../../shared/components/Modal";
 
 export default function AdminUserDetail() {
     const { userId } = useParams();
     const navigate = useNavigate();
+    const { user: authUser } = useAuth();
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [updating, setUpdating] = useState(false);
+
+    // Delete Modal State
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         loadUser();
@@ -19,10 +30,7 @@ export default function AdminUserDetail() {
             setLoading(true);
             const res = await getUserById(userId);
             const userData = res.data;
-            // Normalize ID if missing
-            if (!userData.id && userData._id) {
-                userData.id = userData._id;
-            }
+            if (!userData.id && userData._id) userData.id = userData._id;
             setUser(userData);
             setError(null);
         } catch (err) {
@@ -40,13 +48,10 @@ export default function AdminUserDetail() {
 
         try {
             setUpdating(true);
-            // Optimistic update
             setUser(prev => ({ ...prev, is_active: newIsActive }));
-
             await updateUserStatus(user.id, newIsActive);
         } catch (err) {
             console.error("Failed to update status", err);
-            // Revert
             setUser(prev => ({ ...prev, is_active: currentIsActive }));
             alert("Failed to update status");
         } finally {
@@ -57,11 +62,9 @@ export default function AdminUserDetail() {
     const handleRoleChange = async (newRole) => {
         if (!user || user.role === newRole) return;
         const oldRole = user.role;
-
         try {
             setUpdating(true);
             setUser(prev => ({ ...prev, role: newRole }));
-
             await updateUserRole(user.id, newRole);
         } catch (err) {
             console.error("Failed to update role", err);
@@ -73,181 +76,187 @@ export default function AdminUserDetail() {
     };
 
     const handleDelete = async () => {
-        if (!window.confirm("Are you sure you want to PERMANENTLY delete this user? This cannot be undone.")) return;
-
         try {
-            setUpdating(true);
+            setIsDeleting(true);
             await deleteUser(user.id);
             navigate('/admin/users');
         } catch (err) {
             console.error("Failed to delete user", err);
             alert("Failed to delete user");
-            setUpdating(false);
+            setIsDeleting(false);
+            setIsDeleteModalOpen(false);
         }
     };
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-900 flex items-center justify-center">
-                <div className="text-white animate-pulse">Loading user details...</div>
+            <div className="min-h-screen flex items-center justify-center bg-slate-50">
+                <Spinner size="lg" color="indigo" />
             </div>
         );
     }
 
     if (error || !user) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-900 flex flex-col items-center justify-center p-4">
-                <h2 className="text-2xl text-red-400 font-bold mb-4">Error</h2>
-                <p className="text-slate-300 mb-6">{error || "User not found"}</p>
-                <button
-                    onClick={() => navigate('/admin/users')}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
-                >
+            <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
+                <h2 className="text-2xl text-rose-600 font-bold mb-4">Error</h2>
+                <p className="text-slate-500 mb-6">{error || "User not found"}</p>
+                <Button onClick={() => navigate('/admin/users')} variant="outline">
                     Back to Users
-                </button>
+                </Button>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-900 py-10 px-4">
-            <div className="max-w-4xl mx-auto">
+        <div className="min-h-screen bg-slate-50">
+            <Navbar title="Admin Console" user={authUser} />
 
+            <div className="max-w-5xl mx-auto py-8 px-4">
                 {/* Navigation */}
-                <button
-                    onClick={() => navigate('/admin/users')}
-                    className="mb-8 flex items-center text-slate-400 hover:text-white transition-colors"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
-                    </svg>
-                    Back to Directory
-                </button>
+                <div className="mb-6">
+                    <Button variant="ghost" onClick={() => navigate('/admin/users')} className="pl-0 hover:bg-transparent text-slate-500 hover:text-slate-800">
+                        ← Back to Directory
+                    </Button>
+                </div>
 
-                <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
-
-                    {/* Header Section */}
-                    <div className="relative h-32 bg-gradient-to-r from-indigo-900/50 to-purple-900/50">
-                        <div className="absolute -bottom-12 left-8 md:left-12">
-                            <div className="w-24 h-24 rounded-2xl bg-slate-800 border-4 border-slate-900 shadow-xl overflow-hidden flex items-center justify-center">
-                                {user.avatar ? (
-                                    <img src={user.avatar} alt={user.first_name} className="w-full h-full object-cover" />
-                                ) : (
-                                    <span className="text-3xl font-bold text-slate-500">
-                                        {(user.first_name?.[0] || user.email?.[0] || "?").toUpperCase()}
-                                    </span>
-                                )}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Left Column: Identity & Status */}
+                    <div className="lg:col-span-1 space-y-6">
+                        <Card className="flex flex-col items-center p-8 border-indigo-100 relative overflow-hidden">
+                            {/* Status Badge */}
+                            <div className="absolute top-4 right-4">
+                                <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${user.is_active
+                                    ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                    : 'bg-rose-50 text-rose-600 border-rose-100'
+                                    }`}>
+                                    {user.is_active ? 'Active' : 'Suspended'}
+                                </span>
                             </div>
-                        </div>
 
-                        <div className="absolute top-4 right-4 flex gap-3">
-                            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${user.is_active
-                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                : 'bg-red-500/10 text-red-400 border-red-500/20'
-                                }`}>
-                                {user.is_active ? 'Active' : 'Suspended'}
-                            </span>
-                        </div>
-                    </div>
-
-                    {/* Body Content */}
-                    <div className="pt-16 pb-12 px-8 md:px-12">
-
-                        <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-8">
-                            <div>
-                                <h1 className="text-3xl font-bold text-white mb-2">
-                                    {user.first_name} {user.last_name}
-                                </h1>
-                                <p className="text-slate-400">{user.email}</p>
-                                <div className="flex items-center gap-2 mt-3 text-sm text-slate-500">
-                                    <span>ID: {user.id}</span>
-                                    <span>•</span>
-                                    <span>Joined {new Date(user.date_joined).toLocaleDateString()}</span>
+                            <div className="w-32 h-32 rounded-full p-1 bg-gradient-to-br from-indigo-500 to-purple-500 shadow-xl mb-6">
+                                <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
+                                    {user.avatar ? (
+                                        <img src={user.avatar} alt={user.first_name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <span className="text-4xl font-bold text-slate-300">
+                                            {(user.first_name?.[0] || user.email?.[0] || "?").toUpperCase()}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
 
-                            <div className="flex flex-wrap gap-3">
-                                <button
-                                    disabled={updating}
+                            <h1 className="text-2xl font-bold text-slate-800 text-center">
+                                {user.first_name} {user.last_name}
+                            </h1>
+                            <p className="text-slate-500 text-sm">{user.email}</p>
+                            <div className="mt-2 text-xs text-slate-400 font-mono">ID: {user.id}</div>
+
+                            <div className="mt-8 w-full space-y-3">
+                                <Button
+                                    variant={user.is_active ? "danger" : "secondary"}
+                                    className="w-full justify-center"
                                     onClick={handleStatusToggle}
-                                    className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${user.is_active
-                                        ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20'
-                                        : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20'
-                                        }`}
+                                    isLoading={updating}
                                 >
                                     {user.is_active ? 'Suspend Account' : 'Activate Account'}
-                                </button>
-
-                                <button
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    className="w-full justify-center border-rose-200 text-rose-600 hover:bg-rose-50 hover:border-rose-300"
+                                    onClick={() => setIsDeleteModalOpen(true)}
                                     disabled={updating}
-                                    onClick={handleDelete}
-                                    className="px-4 py-2 rounded-xl text-sm font-semibold bg-slate-800 text-slate-300 hover:bg-red-600/20 hover:text-red-300 border border-slate-700 transition-all"
                                 >
                                     Delete User
-                                </button>
+                                </Button>
                             </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            {/* Role Management */}
-                            <div className="bg-slate-950/50 rounded-2xl p-6 border border-slate-800/50">
-                                <h3 className="text-lg font-semibold text-white mb-4">Role & Permissions</h3>
-                                <div className="space-y-4">
-                                    <p className="text-sm text-slate-400">
-                                        Current Role: <span className="text-indigo-400 font-medium capitalize">{user.role}</span>
-                                    </p>
-
-                                    <div className="flex flex-wrap gap-2">
-                                        {['client', 'architect', 'engineer', 'admin'].map(role => (
-                                            <button
-                                                key={role}
-                                                onClick={() => handleRoleChange(role)}
-                                                disabled={user.role === role || updating}
-                                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider border transition-all ${user.role === role
-                                                    ? 'bg-indigo-600 text-white border-indigo-500 ring-2 ring-indigo-500/30'
-                                                    : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-slate-500'
-                                                    }`}
-                                            >
-                                                {role}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Additional Details */}
-                            <div className="bg-slate-950/50 rounded-2xl p-6 border border-slate-800/50">
-                                <h3 className="text-lg font-semibold text-white mb-4">Profile Information</h3>
-                                <dl className="space-y-4 text-sm">
-                                    <div className="grid grid-cols-3 gap-4">
-                                        <dt className="text-slate-500">Phone</dt>
-                                        <dd className="col-span-2 text-slate-300">{user.phone || "Not specified"}</dd>
-                                    </div>
-                                    <div className="grid grid-cols-3 gap-4">
-                                        <dt className="text-slate-500">Verified</dt>
-                                        <dd className="col-span-2">
-                                            {user.is_verified ? (
-                                                <span className="text-emerald-400 flex items-center gap-1">
-                                                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
-                                                    Verified
-                                                </span>
-                                            ) : (
-                                                <span className="text-slate-500">Unverified</span>
-                                            )}
-                                        </dd>
-                                    </div>
-                                    <div className="grid grid-cols-3 gap-4">
-                                        <dt className="text-slate-500">MFA Enabled</dt>
-                                        <dd className="col-span-2 text-slate-300">{user.has_mfa ? "Yes" : "No"}</dd>
-                                    </div>
-                                </dl>
-                            </div>
-                        </div>
-
+                        </Card>
                     </div>
 
+                    {/* Right Column: Details & Roles */}
+                    <div className="lg:col-span-2 space-y-6">
+                        <Card title="Role Management" className="border-indigo-100">
+                            <div className="mb-4">
+                                <p className="text-sm text-slate-500 mb-3">Current Role</p>
+                                <div className="flex flex-wrap gap-2">
+                                    {['client', 'architect', 'engineer', 'admin'].map(role => (
+                                        <button
+                                            key={role}
+                                            onClick={() => handleRoleChange(role)}
+                                            disabled={user.role === role || updating}
+                                            className={`px-4 py-2 rounded-lg text-sm font-semibold uppercase tracking-wider border transition-all duration-200 ${user.role === role
+                                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
+                                                : 'bg-white text-slate-500 border-slate-200 hover:border-indigo-300 hover:text-indigo-600'
+                                                }`}
+                                        >
+                                            {role}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </Card>
+
+                        <Card title="Profile Information" className="border-indigo-100">
+                            <dl className="space-y-4 text-sm">
+                                <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-4">
+                                    <dt className="text-slate-500 font-medium">Phone</dt>
+                                    <dd className="col-span-2 text-slate-800 font-semibold">{user.phone || "Not specified"}</dd>
+                                </div>
+                                <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-4">
+                                    <dt className="text-slate-500 font-medium">Joined Date</dt>
+                                    <dd className="col-span-2 text-slate-800 font-semibold">
+                                        {new Date(user.date_joined).toLocaleDateString(undefined, {
+                                            year: 'numeric', month: 'long', day: 'numeric'
+                                        })}
+                                    </dd>
+                                </div>
+                                <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-4">
+                                    <dt className="text-slate-500 font-medium">Verified</dt>
+                                    <dd className="col-span-2">
+                                        {user.is_verified ? (
+                                            <span className="text-emerald-600 font-bold flex items-center gap-1">
+                                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                                                Verified Account
+                                            </span>
+                                        ) : (
+                                            <span className="text-slate-400 font-medium">Unverified</span>
+                                        )}
+                                    </dd>
+                                </div>
+                                <div className="grid grid-cols-3 gap-4">
+                                    <dt className="text-slate-500 font-medium">MFA Enabled</dt>
+                                    <dd className="col-span-2 text-slate-800 font-semibold">{user.has_mfa ? "Yes" : "No"}</dd>
+                                </div>
+                            </dl>
+                        </Card>
+                    </div>
                 </div>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            <Modal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                title="Delete User"
+            >
+                <div className="space-y-4">
+                    <div className="p-4 bg-rose-50 text-rose-700 rounded-lg text-sm">
+                        <strong>Warning:</strong> This action is permanent and cannot be undone. All data associated with this user will be removed.
+                    </div>
+                    <p className="text-slate-600">
+                        Are you sure you want to delete
+                        <span className="font-semibold text-slate-900"> {user.first_name} {user.last_name}</span>?
+                    </p>
+                    <div className="flex justify-end gap-3 pt-4">
+                        <Button variant="ghost" onClick={() => setIsDeleteModalOpen(false)} disabled={isDeleting}>
+                            Cancel
+                        </Button>
+                        <Button variant="danger" onClick={handleDelete} isLoading={isDeleting}>
+                            Yes, Delete User
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 }
