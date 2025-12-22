@@ -39,7 +39,11 @@ export default function AdminDashboard() {
           getDashboardStats(),
           getSystemHealth(),
         ]);
-        setStats(statsRes.data);
+        setStats({
+          totalUsers: statsRes.data.totalUsers || statsRes.data.total_users || 0,
+          activeSessions: statsRes.data.activeSessions || statsRes.data.active_sessions || 0,
+          openIncidents: statsRes.data.openIncidents || statsRes.data.open_incidents || 0,
+        });
         setHealth(healthRes.data);
       } catch (err) {
         console.error("Failed to load admin dashboard data", err);

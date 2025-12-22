@@ -25,7 +25,7 @@ export default function EditProfile() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
-  const { user: authUser } = useAuth();
+  const { user: authUser, updateUser } = useAuth();
   const navigate = useNavigate();
 
   const buildImageUrl = (raw) => {
@@ -92,6 +92,7 @@ export default function EditProfile() {
       setError(null);
       setSuccess(null);
       await updateProfile(profile);
+      updateUser(profile); // Sync Navbar
       setSuccess("Profile updated successfully!");
       setTimeout(() => {
         navigate("/client/profile");
@@ -134,7 +135,9 @@ export default function EditProfile() {
       const newAvatarUrl = data.profile_image || data.avatar_url;
 
       if (newAvatarUrl) {
-        setCurrentAvatar(buildImageUrl(newAvatarUrl));
+        let absUrl = buildImageUrl(newAvatarUrl);
+        setCurrentAvatar(absUrl);
+        updateUser({ avatar_url: absUrl, profile_image: absUrl }); // Sync Navbar
       }
       setImageFile(null);
     } catch (err) {

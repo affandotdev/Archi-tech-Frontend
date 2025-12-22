@@ -61,6 +61,14 @@ export const AuthProvider = ({ children }) => {
     setMfaVerified(true);
   };
 
+  const updateUser = (userData) => {
+    setUser((prev) => {
+      const updated = { ...prev, ...userData };
+      localStorage.setItem("user", JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   const logout = () => {
     localStorage.clear();
     setUser(null);
@@ -69,7 +77,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, role, mfaVerified, login, logout, setMfaCompleted }}>
+    <AuthContext.Provider value={{ user, role, mfaVerified, login, logout, setMfaCompleted, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

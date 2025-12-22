@@ -29,10 +29,16 @@ export default function Register() {
 
     try {
       await registerUser(form);
+      localStorage.setItem("registration_email", form.email);
       alert("Registered successfully! Check your email for OTP.");
       window.location.href = "/verify-otp";
     } catch (err) {
-      setError(err.response?.data?.message || "Registration failed");
+      console.error("Registration error:", err.response?.data);
+      const errorMessage = err.response?.data?.detail ||
+        err.response?.data?.message ||
+        (err.response?.data?.email ? `Email: ${err.response.data.email[0]}` : null) ||
+        "Registration failed";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

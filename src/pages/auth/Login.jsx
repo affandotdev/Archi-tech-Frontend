@@ -9,7 +9,7 @@ import Card from "../../shared/components/Card";
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [data, setData] = useState({ username: "", password: "" });
+  const [data, setData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -49,8 +49,12 @@ export default function Login() {
         }
       }
     } catch (err) {
-      console.log('Login error:', err);
-      setError(err.response?.data?.message || "Invalid credentials. Please try again.");
+      console.error('Login error details:', err.response?.data);
+      const errorMessage = err.response?.data?.detail ||
+        err.response?.data?.message ||
+        (err.response?.data?.non_field_errors ? err.response?.data?.non_field_errors[0] : null) ||
+        "Invalid credentials. Please try again.";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -79,13 +83,13 @@ export default function Login() {
         <form onSubmit={submit} className="space-y-5">
           <Input
             label="Email Address"
-            id="username"
+            id="email"
             type="email"
             placeholder="you@example.com"
-            value={data.username}
-            onChange={(e) => setData({ ...data, username: e.target.value })}
+            value={data.email}
+            onChange={(e) => setData({ ...data, email: e.target.value })}
             required
-            autoComplete="username"
+            autoComplete="email"
           />
 
           <div>
