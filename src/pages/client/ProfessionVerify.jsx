@@ -8,7 +8,7 @@ export default function ProfessionVerify() {
   const [document, setDocument] = useState(null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState(""); // 'success' or 'error'
+  const [status, setStatus] = useState("");
 
   const handleSubmit = async () => {
     if (!document) {

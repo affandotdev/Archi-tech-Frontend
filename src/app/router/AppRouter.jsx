@@ -44,6 +44,13 @@ import EditEngineerProfile from "../../pages/engineer/EditEngineerProfile";
 
 import ProfessionVerify from "../../pages/client/ProfessionVerify";
 import AdminProfessionRequests from "../../pages/admin/AdminProfessionRequests";
+import TestThree from "../../features/portfolio/pages/TestThree";
+
+// Portfolio
+import PortfolioList from "../../features/portfolio/pages/PortfolioList";
+import ProjectDetail from "../../features/portfolio/pages/ProjectDetail";
+import ProjectUpload from "../../features/portfolio/pages/ProjectUpload";
+import ProjectEdit from "../../features/portfolio/pages/ProjectEdit";
 
 
 export default function AppRouter() {
@@ -102,6 +109,13 @@ export default function AppRouter() {
         <Route path="/engineer/profile" element={<ProtectedRoute requiredRole="engineer"><EngineerProfile /></ProtectedRoute>} />
         <Route path="/engineer/edit-profile" element={<ProtectedRoute requiredRole="engineer"><EditEngineerProfile /></ProtectedRoute>} />
 
+        {/* Portfolio Routes */}
+        <Route path="/portfolio/list/:userId" element={<PortfolioList />} />
+        <Route path="/portfolio/project/:projectId" element={<ProjectDetail />} />
+        <Route path="/portfolio/upload" element={<ProtectedRoute><ProjectUpload /></ProtectedRoute>} />
+        <Route path="/portfolio/edit/:projectId" element={<ProtectedRoute><ProjectEdit /></ProtectedRoute>} />
+
+        <Route path="/three-test" element={<TestThree />} />
       </Routes>
     </BrowserRouter>
   );

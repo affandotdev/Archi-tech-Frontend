@@ -41,10 +41,19 @@ export default function ArchitectDashboard() {
       label: "Share Drawings",
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M7 8h10M7 12h6m-6 4h3M5 5a2 2 0 012-2h10a2 2 0 012 2v14l-4-3-4 3-4-3-4 3V5z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M7 8h10M7 12h6m-6 4h3M5 5a2 2 0 012-2h10a2 2 0 012 2v14l-4-3-4 3-4 3-4 3V5z" />
         </svg>
       ),
       onClick: () => navigate("/architect/drawings"),
+    },
+    {
+      label: "Add 3D Project",
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+        </svg>
+      ),
+      onClick: () => navigate("/portfolio/upload"),
     },
     {
       label: "Schedule",
@@ -63,6 +72,19 @@ export default function ArchitectDashboard() {
         </svg>
       ),
       onClick: () => navigate("/architect/profile"),
+    },
+    {
+      label: "My 3D Portfolio",
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+        </svg>
+      ),
+      onClick: () => {
+        const userStr = localStorage.getItem("user");
+        const uid = userStr ? JSON.parse(userStr).id : null;
+        if (uid) navigate(`/portfolio/list/${uid}`);
+      },
     },
   ];
 

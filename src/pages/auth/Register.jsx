@@ -3,6 +3,7 @@ import { registerUser } from "../../services/auth";
 import Input from "../../shared/components/Input";
 import Button from "../../shared/components/Button";
 import Card from "../../shared/components/Card";
+import registerBg from "../../assets/register-bg.png";
 
 export default function Register() {
   const [form, setForm] = useState({
@@ -45,8 +46,20 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 via-slate-900 to-slate-900 px-4 py-12">
-      <Card className="w-full max-w-lg shadow-2xl border-indigo-500/20 backdrop-blur-sm bg-white/95">
+    <div
+      className="min-h-screen flex items-center justify-center px-4 py-12 relative"
+      style={{
+        backgroundImage: `url(${registerBg})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
+      {/* Light Overlay */}
+      <div className="absolute inset-0 bg-white/30 backdrop-blur-[2px]"></div>
+
+      {/* Content */}
+      <Card className="w-full max-w-lg shadow-2xl border-white/40 backdrop-blur-md bg-white/80 relative z-10">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-6">
             <div className="w-12 h-12 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">

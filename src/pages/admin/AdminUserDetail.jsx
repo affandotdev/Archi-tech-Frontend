@@ -152,6 +152,19 @@ export default function AdminUserDetail() {
                             <p className="text-slate-500 text-sm">{user.email}</p>
                             <div className="mt-2 text-xs text-slate-400 font-mono">ID: {user.id}</div>
 
+                            {/* View Portfolio Button for Professionals */}
+                            {['architect', 'engineer'].includes(user.role) && (
+                                <div className="mt-4 w-full">
+                                    <Button
+                                        variant="outline"
+                                        className="w-full justify-center border-indigo-200 text-indigo-600 hover:bg-indigo-50"
+                                        onClick={() => navigate(`/portfolio/list/${user.id}`)}
+                                    >
+                                        View Portfolio
+                                    </Button>
+                                </div>
+                            )}
+
                             <div className="mt-8 w-full space-y-3">
                                 <Button
                                     variant={user.is_active ? "danger" : "secondary"}
