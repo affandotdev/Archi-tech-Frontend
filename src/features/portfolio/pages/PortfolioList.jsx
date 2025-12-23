@@ -59,26 +59,27 @@ export default function PortfolioList() {
         <div className="min-h-screen bg-slate-50">
             <Navbar title="3D Portfolio" user={user} />
 
-            <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-                <header className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div>
-                        <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
-                            <Link to={dashboardLink} className="hover:text-indigo-600 transition-colors">
+            {/* Header / Search Section */}
+            <div className="bg-indigo-900 text-white py-12 px-4 shadow-lg mb-8">
+                <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div className="text-center md:text-left">
+                        <div className="flex items-center gap-2 text-sm text-indigo-200 mb-2 justify-center md:justify-start">
+                            <Link to={dashboardLink} className="hover:text-white transition-colors">
                                 Dashboard
                             </Link>
                             <span>/</span>
-                            <span className="text-slate-800 font-medium">Portfolio</span>
+                            <span className="font-medium text-white">Portfolio</span>
                         </div>
-                        <h1 className="text-3xl font-bold text-slate-800">
-                            Project Gallery
-                        </h1>
-                        <p className="text-slate-500 mt-1">Immersive Experience in Every Dimension</p>
+                        <h1 className="text-4xl font-bold mb-2">Project Gallery</h1>
+                        <p className="text-indigo-200 max-w-2xl">
+                            Immersive Experience in Every Dimension
+                        </p>
                     </div>
 
                     {user && user.id == targetUserId && (
                         <Link
                             to="/portfolio/upload"
-                            className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors shadow-sm"
+                            className="inline-flex items-center gap-2 px-6 py-3 bg-white text-indigo-900 hover:bg-indigo-50 rounded-full font-bold transition-all shadow-md transform hover:-translate-y-0.5"
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
@@ -86,7 +87,11 @@ export default function PortfolioList() {
                             Upload Project
                         </Link>
                     )}
-                </header>
+                </div>
+            </div>
+
+            <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+                {/* Removed inner header since it's now in banner */}
 
                 {projects.length === 0 ? (
                     <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-300">

@@ -51,6 +51,7 @@ import PortfolioList from "../../features/portfolio/pages/PortfolioList";
 import ProjectDetail from "../../features/portfolio/pages/ProjectDetail";
 import ProjectUpload from "../../features/portfolio/pages/ProjectUpload";
 import ProjectEdit from "../../features/portfolio/pages/ProjectEdit";
+import ConnectionApprovals from "../../features/follow/pages/ConnectionApprovals";
 
 
 export default function AppRouter() {
@@ -116,6 +117,9 @@ export default function AppRouter() {
         <Route path="/portfolio/edit/:projectId" element={<ProtectedRoute><ProjectEdit /></ProtectedRoute>} />
 
         <Route path="/three-test" element={<TestThree />} />
+
+        {/* Connections */}
+        <Route path="/connections" element={<ProtectedRoute><ConnectionApprovals /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
   );

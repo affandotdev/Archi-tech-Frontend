@@ -1,7 +1,13 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import FollowService from "../../features/follow/api/follow.api";
+import Navbar from "../../widgets/Navbar/Navbar";
 
 export default function LandingPage() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [architect, setArchitects] = useState([]);
   const [engineer, setEngineers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,7 +19,7 @@ export default function LandingPage() {
       setEngineers(res.data.engineers);
     } catch (error) {
       console.error("Error fetching landing data", error);
-      alert("Unable to load professionals");
+      // alert("Unable to load professionals"); // Silenced for UX
     } finally {
       setLoading(false);
     }
@@ -25,7 +31,7 @@ export default function LandingPage() {
 
   if (loading)
     return (
-      <div className="min-h-screen flex justify-center items-center text-xl font-semibold">
+      <div className="min-h-screen flex justify-center items-center text-xl font-semibold bg-slate-50 text-slate-600">
         Loading professionals...
       </div>
     );
@@ -34,43 +40,46 @@ export default function LandingPage() {
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
 
       {/* Navigation Bar */}
-      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex-shrink-0 flex items-center gap-2 cursor-pointer" onClick={() => window.location.reload()}>
-              <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
-                <span className="text-white font-bold text-lg">A</span>
+      {user ? (
+        <Navbar user={user} title="ArchiTech Marketplace" />
+      ) : (
+        <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <div className="flex-shrink-0 flex items-center gap-2 cursor-pointer" onClick={() => window.location.reload()}>
+                <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
+                  <span className="text-white font-bold text-lg">A</span>
+                </div>
+                <span className="font-bold text-xl tracking-tight text-slate-900">ArchiTech</span>
               </div>
-              <span className="font-bold text-xl tracking-tight text-slate-900">ArchiTech</span>
-            </div>
 
-            <div className="hidden md:flex items-center space-x-8">
-              <a href="#" className="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors">Find Talent</a>
-              <a href="#" className="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors">How it Works</a>
-              <a href="#" className="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors">Projects</a>
-            </div>
+              <div className="hidden md:flex items-center space-x-8">
+                <a href="#talent" className="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors">Find Talent</a>
+                <a href="#" className="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors">How it Works</a>
+                <a href="#" className="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors">Projects</a>
+              </div>
 
-            <div className="flex items-center gap-4">
-              <a
-                href="/login"
-                className="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors"
-                onClick={(e) => { e.preventDefault(); window.location.href = '/login'; }}
-              >
-                Log in
-              </a>
-              <a
-                href="/register"
-                className="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-500/30"
-                onClick={(e) => { e.preventDefault(); window.location.href = '/register'; }}
-              >
-                Sign up
-              </a>
+              <div className="flex items-center gap-4">
+                <Link
+                  to="/login"
+                  className="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors"
+                >
+                  Log in
+                </Link>
+                <Link
+                  to="/register"
+                  className="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-500/30"
+                >
+                  Sign up
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
-      </nav>
+        </nav>
+      )}
 
-      {/* Hero Section */}
+      {/* Hero Section - Only show if not logged in or if user explicitly wants to see landing? 
+          Actually user wants landing accessible after login. So we keep it. */}
       <section className="relative overflow-hidden pt-20 pb-32 lg:pt-32">
         <div className="absolute top-0 left-0 w-full h-full bg-white bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]"></div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -86,33 +95,34 @@ export default function LandingPage() {
           <p className="mt-4 max-w-2xl mx-auto text-xl text-slate-600 mb-10">
             Connect with top-tier Architects and Engineers to bring your dream project to life. Verified professionals, seamless collaboration.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a
-              href="/register"
-              className="px-8 py-4 text-base font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/40 transform hover:-translate-y-1"
-              onClick={(e) => { e.preventDefault(); window.location.href = '/register'; }}
-            >
-              Get Started Now
-            </a>
-            <a
-              href="#talent"
-              className="px-8 py-4 text-base font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all hover:border-slate-300"
-            >
-              View Professionals
-            </a>
-          </div>
+          {!user && (
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                to="/register"
+                className="px-8 py-4 text-base font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/40 transform hover:-translate-y-1"
+              >
+                Get Started Now
+              </Link>
+              <a
+                href="#talent"
+                className="px-8 py-4 text-base font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all hover:border-slate-300"
+              >
+                View Professionals
+              </a>
+            </div>
+          )}
         </div>
       </section>
 
       {/* Main Content */}
       <div id="talent" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
         {/* Architects Section */}
-        <Section title="Featured Architects" description="Visionaries who design the framework of your future." data={architect} />
+        <Section title="Featured Architects" description="Visionaries who design the framework of your future." data={architect} user={user} />
 
         <div className="border-t border-slate-200 my-16"></div>
 
         {/* Engineers Section */}
-        <Section title="Expert Engineers" description="Technical masters ensuring structural integrity and innovation." data={engineer} />
+        <Section title="Expert Engineers" description="Technical masters ensuring structural integrity and innovation." data={engineer} user={user} />
       </div>
 
       {/* Footer */}
@@ -125,7 +135,7 @@ export default function LandingPage() {
   );
 }
 
-function Section({ title, description, data }) {
+function Section({ title, description, data, user }) {
   return (
     <section className="scroll-mt-24">
       <div className="mb-10">
@@ -140,7 +150,7 @@ function Section({ title, description, data }) {
       ) : (
         <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
           {data.map((person) => (
-            <ProfessionalCard key={person.id} person={person} />
+            <ProfessionalCard key={person.id} person={person} user={user} />
           ))}
         </div>
       )}
@@ -148,12 +158,50 @@ function Section({ title, description, data }) {
   );
 }
 
-function ProfessionalCard({ person }) {
+function ProfessionalCard({ person, user }) {
   const defaultAvatar = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+  const navigate = useNavigate();
+  const [requestStatus, setRequestStatus] = useState("connect"); // connect, pending, connected
+  const [loading, setLoading] = useState(false);
+
+  // Note: Determining initial status (Pending/Connected) would require fetching connection status for all users,
+  // which implies an N+1 problem or a bulk fetch. For now, we default to "Connect" and handle the response content.
+
+  const handleConnect = async () => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    if (user.role !== 'client') {
+      alert("Only Clients can send connection requests.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await FollowService.sendConnectionRequest(person.id);
+      if (response.status === 'pending' || response.status === 'approved') {
+        setRequestStatus(response.status);
+        alert(`Request ${response.status === 'pending' ? 'sent' : 'approved'}!`);
+      } else if (response.detail === 'request already exists') {
+        setRequestStatus(response.status || 'pending');
+        alert(`Request is already ${response.status || 'pending'}.`);
+      }
+    } catch (error) {
+      console.error("Connection failed", error);
+      if (error.response?.data?.detail) {
+        alert(error.response.data.detail);
+      } else {
+        alert("Failed to send request.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="group bg-white rounded-2xl border border-slate-200 p-6 hover:shadow-xl hover:border-indigo-100 transition-all duration-300 cursor-pointer">
-      <div className="relative mb-4">
+    <div className="group bg-white rounded-2xl border border-slate-200 p-6 hover:shadow-xl hover:border-indigo-100 transition-all duration-300 cursor-pointer flex flex-col h-full">
+      <div className="relative mb-4 flex-shrink-0">
         <div className="w-20 h-20 mx-auto rounded-full p-1 bg-gradient-to-tr from-indigo-500 to-violet-500">
           <img
             src={person.avatar_url || defaultAvatar}
@@ -161,6 +209,7 @@ function ProfessionalCard({ person }) {
             className="w-full h-full rounded-full object-cover border-2 border-white bg-white"
           />
         </div>
+        {/* Verification Badge/Active Badge */}
         <div className="absolute bottom-0 right-1/2 translate-x-8 translate-y-1">
           <span className="flex h-3 w-3">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -178,18 +227,42 @@ function ProfessionalCard({ person }) {
         {person.location || "Location N/A"}
       </p>
 
-      <div className="bg-slate-50 rounded-xl p-3 mb-4">
+      <div className="bg-slate-50 rounded-xl p-3 mb-4 flex-grow">
         <p className="text-slate-600 text-center text-xs leading-relaxed line-clamp-3 italic">
           "{person.bio || "No bio available."}"
         </p>
       </div>
 
-      <button
-        className="w-full py-2.5 rounded-lg text-sm font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-600 hover:text-white transition-all duration-200"
-        onClick={() => alert("Login to view full profile")}
-      >
-        View Profile
-      </button>
+      {user && user.role === 'client' ? (
+        <button
+          className={`w-full py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ${requestStatus === 'pending' ? 'bg-amber-100 text-amber-700 cursor-default' :
+              requestStatus === 'approved' ? 'bg-emerald-100 text-emerald-700 cursor-default' :
+                'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm shadow-indigo-500/30'
+            }`}
+          onClick={handleConnect}
+          disabled={loading || requestStatus !== 'connect'}
+        >
+          {loading ? 'Sending...' :
+            requestStatus === 'pending' ? 'Request Sent' :
+              requestStatus === 'approved' ? 'Connected' :
+                'Connect'}
+        </button>
+      ) : (
+        <button
+          className="w-full py-2.5 rounded-lg text-sm font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-600 hover:text-white transition-all duration-200"
+          onClick={() => !user ? navigate('/login') : alert("Please log in as a Client to connect.")}
+        >
+          {!user ? "Login to Connect" : "View Profile"}
+        </button>
+      )}
+
+      {/* Portfolio Link (Optional) */}
+      <div className="mt-2 text-center">
+        <Link to={`/portfolio/list/${person.id}`} className="text-xs text-slate-400 hover:text-indigo-500 hover:underline">
+          View Portfolio
+        </Link>
+      </div>
+
     </div>
   );
 }

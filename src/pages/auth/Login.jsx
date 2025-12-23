@@ -33,11 +33,12 @@ export default function Login() {
         // Redirect to MFA verification for login
         navigate("/mfa-login-verify");
       } else {
-        // Login directly (should not happen in MFA-only system)
+        // Login directly
         login(res.data);
-        console.log('MFA is not required, redirecting to dashboard');
-        // Navigate to dashboard based on role
-        const role = res.data.role;
+        console.log('Login successful, redirecting based on role:', res.data.role);
+
+        const role = (res.data.role || "").toLowerCase();
+
         if (role === 'architect') {
           navigate("/architect/dashboard");
         } else if (role === 'engineer') {
@@ -45,7 +46,6 @@ export default function Login() {
         } else if (role === 'admin') {
           navigate("/admin/dashboard");
         } else {
-          // Default to client dashboard
           navigate("/client/dashboard");
         }
       }
