@@ -17,7 +17,7 @@ const MessageList = ({ messages, currentUserId }) => {
                 <div className="text-center text-slate-400 mt-10">No messages yet.</div>
             )}
             {messages.map((msg, index) => {
-                const isOwnMessage = msg.sender_id === currentUserId;
+                const isOwnMessage = String(msg.sender_id) === String(currentUserId);
                 return (
                     <div
                         key={index}
