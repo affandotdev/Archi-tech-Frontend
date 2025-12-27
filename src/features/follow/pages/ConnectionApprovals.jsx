@@ -104,7 +104,7 @@ export default function ConnectionApprovals() {
                 ) : activeTab === "requests" ? (
                     <RequestsList requests={requests} handleAction={handleAction} />
                 ) : (
-                    <ConnectionsList connections={connections} />
+                    <ConnectionsList connections={connections} setConnections={setConnections} />
                 )}
             </div>
         </div>
@@ -176,9 +176,9 @@ const Avatar = ({ src, name, size = "md" }) => {
     );
 };
 
-function ConnectionsList({ connections }) {
+function ConnectionsList({ connections, setConnections }) { // Accept setConnections to update state locally
     const navigate = useNavigate();
-    const { user } = useAuth(); // Need current user to generate ID
+    const { user } = useAuth();
 
     if (connections.length === 0) {
         return (
@@ -193,13 +193,8 @@ function ConnectionsList({ connections }) {
     }
 
     const handleMessage = async (targetUserId) => {
-        if (!user || !user.id || !targetUserId) {
-            console.error("User ID missing", user);
-            return;
-        }
-
+        if (!user || !user.id || !targetUserId) return;
         try {
-            // Using the new API to get a valid conversation UUID
             const conversationId = await getOrCreateConversation([String(user.id), String(targetUserId)]);
             navigate(`/chat/${conversationId}`);
         } catch (error) {
@@ -208,10 +203,42 @@ function ConnectionsList({ connections }) {
         }
     };
 
+    const handleRemove = async (targetUserId, name) => {
+        if (!window.confirm(`Are you sure you want to remove ${name} from your connections?`)) return;
+
+        try {
+            await FollowService.removeConnection(targetUserId);
+            // Optimistically update UI
+            if (setConnections) {
+                setConnections(prev => prev.filter(c => String(c.auth_user_id) !== String(targetUserId)));
+            } else {
+                // Fallback if setConnections not passed (though we will update parent to pass it)
+                window.location.reload();
+            }
+        } catch (error) {
+            console.error("Failed to remove connection", error);
+            alert("Failed to remove connection.");
+        }
+    };
+
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {connections.map((person) => (
-                <div key={person.auth_user_id || person.id} className="bg-white border border-slate-200 rounded-xl p-6 flex flex-col items-center hover:shadow-lg transition-shadow">
+                <div key={person.auth_user_id || person.id} className="bg-white border border-slate-200 rounded-xl p-6 flex flex-col items-center hover:shadow-lg transition-shadow relative group">
+                    {/* Remove Option - top right */}
+                    <button
+                        onClick={() => handleRemove(person.auth_user_id, person.full_name)}
+                        className="absolute top-4 right-4 text-slate-300 hover:text-rose-500 transition-colors"
+                        title="Remove Connection"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                            <path fillRule="evenodd" d="M16.5 4.478v.227a48.816 48.816 0 013.878.512.75.75 0 11-.49 1.478l-.56-.092.443 2.112a14.935 14.935 0 01.378 1.492c.075.39.141.77.2 1.144.17 1.056.284 2.054.34 2.978.02.32.046.686.064 1.026.046.914.07 1.761.07 2.457a.75.75 0 01-1.5 0 16.52 16.52 0 00-.063-2.348 29.349 29.349 0 00-.324-2.836l-1.353-8.895-.295-1.939a.75.75 0 011.082-.782 47.923 47.923 0 003.555-.528zM9 12.75a.75.75 0 01.75-.75h4.5a.75.75 0 01.75.75v4.5a.75.75 0 01-.75.75h-4.5a.75.75 0 01-.75-.75v-4.5z" clipRule="evenodd" />
+                            <path d="M11.25 19.25a.75.75 0 000-1.5h-1.5a.75.75 0 000 1.5h1.5z" />
+                            {/* Standard trash icon is better */}
+                            <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm-1.72 6.97a.75.75 0 10-1.06 1.06L10.94 12l-1.72 1.72a.75.75 0 101.06 1.06L12 13.06l1.72 1.72a.75.75 0 101.06-1.06L13.06 12l1.72-1.72a.75.75 0 10-1.06-1.06L12 10.94l-1.72-1.72z" clipRule="evenodd" />
+                        </svg>
+                    </button>
+
                     <Avatar src={person.avatar_url} name={person.full_name} size="lg" />
                     <h3 className="mt-4 text-lg font-bold text-slate-900">{person.full_name || "Unknown"}</h3>
                     <p className="text-sm text-indigo-600 font-medium uppercase tracking-wide">{person.role || "User"}</p>

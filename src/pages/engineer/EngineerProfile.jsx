@@ -40,6 +40,11 @@ export default function EngineerProfile() {
         return `http://localhost:8001${path}`;
     };
 
+    const formatDate = (value) => {
+        if (!value) return "Not set";
+        try { return new Date(value).toLocaleDateString(); } catch { return value; }
+    };
+
     if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><Spinner size="lg" color="indigo" /></div>;
 
     if (error === "Profile not found") {
@@ -99,7 +104,19 @@ export default function EngineerProfile() {
                             <h2 className="text-2xl font-bold text-slate-800 text-center">
                                 {profile.full_name || `${profile.first_name} ${profile.last_name}`}
                             </h2>
-                            <p className="text-emerald-600 text-sm mt-1 font-medium bg-emerald-50 px-3 py-1 rounded-full">
+
+                            <div className="flex w-full justify-around my-4 border-y border-emerald-50 py-3">
+                                <div className="text-center">
+                                    <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Connections</p>
+                                    <p className="text-lg text-emerald-600 mt-1 font-bold">{profile.connection_count || 0}</p>
+                                </div>
+                                <div className="text-center">
+                                    <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Joined</p>
+                                    <p className="text-xs text-slate-600 mt-1 font-mono">{formatDate(profile.created_at)}</p>
+                                </div>
+                            </div>
+
+                            <p className="text-emerald-600 text-sm font-medium bg-emerald-50 px-3 py-1 rounded-full">
                                 {profile.discipline || "Structural Engineer"}
                             </p>
                         </Card>

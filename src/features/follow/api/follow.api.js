@@ -31,6 +31,13 @@ class FollowService {
         const response = await userHttp.get("/api/follow/connections/");
         return response.data;
     }
+
+    async removeConnection(targetUserId) {
+        const response = await userHttp.post("/api/follow/remove/", {
+            target_user_id: targetUserId
+        });
+        return response.data;
+    }
 }
 
 export default new FollowService();

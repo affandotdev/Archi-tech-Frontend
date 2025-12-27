@@ -1,73 +1,118 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../../../widgets/Navbar/Navbar';
+import { getConversations } from '../api/chat.api';
+import FollowService from '../../follow/api/follow.api';
 
 const ChatHome = () => {
-    const [conversationId, setConversationId] = useState('');
     const navigate = useNavigate();
     const user = JSON.parse(localStorage.getItem('user'));
 
-    const handleJoin = (e) => {
-        e.preventDefault();
-        if (conversationId.trim()) {
-            navigate(`/chat/${conversationId}`);
-        }
+    const [conversations, setConversations] = useState([]);
+    const [connections, setConnections] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const loadData = async () => {
+            if (!user?.id) return;
+            try {
+                // Parallel fetch: Connections (for names) and Conversations (for list)
+                const [convsData, connsData] = await Promise.all([
+                    getConversations(user.id),
+                    FollowService.getConnections()
+                ]);
+
+                // Connections data might be { connections: [...] } or just [...]
+                // Based on previous checks, it likely returns an object with a list or just a list
+                // Let's assume list or extract list
+                const connsList = Array.isArray(connsData) ? connsData : (connsData.connections || []);
+
+                setConnections(connsList);
+                setConversations(convsData);
+            } catch (error) {
+                console.error("Failed to load chat data", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadData();
+    }, [user?.id]);
+
+    const getChatName = (participants) => {
+        if (!participants || participants.length === 0) return "Unknown Chat";
+
+        // Find the participant that is NOT me
+        // Be careful with type comparisons (string vs number)
+        const otherUserId = participants.find(id => String(id) !== String(user.id));
+
+        if (!otherUserId) return "Me"; // Should not happen in normal 2-person chat
+
+        // Find this user in my connections
+        // Connection object structure depends on FollowService. 
+        // Usually has: { request_id, auth_user_id, full_name, profession, ... }
+        // The 'auth_user_id' is the profile ID? Or 'id'? 
+        // Let's assume 'auth_user_id' is the UUID based on previous tasks.
+        const contact = connections.find(c => String(c.auth_user_id) === String(otherUserId));
+
+        return contact ? contact.full_name : `User ${otherUserId.substring(0, 6)}...`;
     };
 
-    const handleStartNew = () => {
-        // Logic to start new chat or generate ID
-        const newId = crypto.randomUUID();
-        navigate(`/chat/${newId}`);
+    const handleChatClick = (id) => {
+        navigate(`/chat/${id}`);
+    };
+
+    if (loading) {
+        return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
     }
 
     return (
         <div className="min-h-screen bg-slate-50">
-            <Navbar title="Chat Center" user={user} />
+            <Navbar title="Messages" user={user} />
 
-            <div className="max-w-md mx-auto mt-20 p-8 bg-white rounded-xl shadow-lg border border-slate-100">
-                <h2 className="text-2xl font-bold text-slate-800 mb-6 text-center">Join Conversation</h2>
+            <div className="max-w-2xl mx-auto mt-8 p-4">
+                <h1 className="text-2xl font-bold text-slate-800 mb-6">Your Conversations</h1>
 
-                <div className="mb-6 p-4 bg-blue-50 text-blue-700 rounded-lg text-sm">
-                    <p className="font-semibold mb-1">How to use:</p>
-                    <ul className="list-disc list-inside space-y-1">
-                        <li>Enter <strong>ANY</strong> ID (e.g., "project-a", "team-chat") to create/join that room.</li>
-                        <li>Or click "Start New Chat" to generate a random room ID.</li>
-                        <li>Share the ID with others to chat in the same room.</li>
-                    </ul>
-                </div>
-
-                <form onSubmit={handleJoin} className="space-y-6">
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">
-                            Conversation ID / Room Name
-                        </label>
-                        <input
-                            type="text"
-                            value={conversationId}
-                            onChange={(e) => setConversationId(e.target.value)}
-                            className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-                            placeholder="e.g. my-project-chat"
-                        />
+                {conversations.length === 0 ? (
+                    <div className="text-center p-10 bg-white rounded-xl shadow-sm border border-slate-200">
+                        <p className="text-slate-500 mb-4">No active conversations yet.</p>
+                        <p className="text-sm text-slate-400">Go to "My Network" to start chatting with your connections!</p>
+                        <button
+                            onClick={() => navigate(user?.role === 'client' ? '/client/dashboard' : '/connections')}
+                            className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm"
+                        >
+                            Go to Network
+                        </button>
                     </div>
-
-                    <button
-                        type="submit"
-                        disabled={!conversationId.trim()}
-                        className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                        Join Chat
-                    </button>
-                </form>
-
-                <div className="mt-6 pt-6 border-t border-slate-100 text-center">
-                    <p className="text-sm text-slate-500 mb-4">Or start a fresh conversation</p>
-                    <button
-                        onClick={handleStartNew}
-                        className="w-full bg-slate-100 text-slate-700 py-3 rounded-lg font-semibold hover:bg-slate-200 transition-colors"
-                    >
-                        Start New Chat (Random ID)
-                    </button>
-                </div>
+                ) : (
+                    <div className="space-y-3">
+                        {conversations.map((conv) => (
+                            <div
+                                key={conv.id}
+                                onClick={() => handleChatClick(conv.id)}
+                                className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md transition-shadow flex items-center justify-between"
+                            >
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-lg">
+                                        {getChatName(conv.participants).charAt(0)}
+                                    </div>
+                                    <div>
+                                        <h3 className="font-semibold text-slate-800">
+                                            {getChatName(conv.participants)}
+                                        </h3>
+                                        <p className="text-xs text-slate-400">
+                                            Click to open chat
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="text-indigo-600">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                                    </svg>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     );

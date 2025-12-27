@@ -188,17 +188,24 @@ export default function Profile() {
 
               <div className="grid grid-cols-2 gap-3 w-full mt-8 border-t border-slate-100 pt-6">
                 <div className="text-center">
+                  <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Connections</p>
+                  <p className="text-xl text-indigo-600 mt-1 font-bold">
+                    {profile.connection_count || 0}
+                  </p>
+                </div>
+                <div className="text-center">
                   <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Joined</p>
                   <p className="text-sm text-slate-600 mt-1 font-mono">
                     {formatDate(profile.created_at)}
                   </p>
                 </div>
-                <div className="text-center">
-                  <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Updated</p>
-                  <p className="text-sm text-slate-600 mt-1 font-mono">
-                    {formatDate(profile.updated_at)}
-                  </p>
-                </div>
+              </div>
+
+              <div className="text-center mt-4 pt-4 border-t border-slate-100 w-full">
+                <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Updated</p>
+                <p className="text-xs text-slate-500 mt-1">
+                  {formatDate(profile.updated_at)}
+                </p>
               </div>
             </Card>
           </div>
@@ -241,7 +248,7 @@ export default function Profile() {
             </Card>
           </div>
         </div>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 }

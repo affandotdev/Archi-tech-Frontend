@@ -6,7 +6,6 @@ const MessageInput = ({ onSendMessage, disabled }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
         if (text.trim() && !disabled) {
-            console.log("MessageInput submitting:", text);
             onSendMessage(text);
             setText('');
         }

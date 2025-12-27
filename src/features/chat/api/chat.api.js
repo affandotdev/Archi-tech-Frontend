@@ -34,3 +34,20 @@ export const getMessages = async (conversationId) => {
         throw error;
     }
 };
+
+/**
+ * Fetches list of conversations for the current user
+ * @param {string} userId - Current User UUID
+ * @returns {Promise<Array>} - List of conversations
+ */
+export const getConversations = async (userId) => {
+    try {
+        const response = await axios.get(`${CHAT_API_URL}/conversations/list/`, {
+            params: { user_id: userId }
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Failed to fetch conversations:", error);
+        throw error;
+    }
+};

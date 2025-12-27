@@ -77,8 +77,7 @@ export const useChatSocket = (conversationId, senderId) => {
             };
             ws.send(JSON.stringify(payload));
         } else {
-            console.error("[useChatSocket] Cannot send: Socket not OPEN.");
-            alert("Connection lost. Please refresh.");
+            console.warn("[useChatSocket] Cannot send: Socket not OPEN. Current state:", ws?.readyState);
         }
     }, [senderId]);
 

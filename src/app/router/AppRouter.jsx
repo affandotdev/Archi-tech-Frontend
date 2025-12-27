@@ -126,7 +126,7 @@ export default function AppRouter() {
         <Route path="/connections" element={<ProtectedRoute><ConnectionApprovals /></ProtectedRoute>} />
 
         {/* Chat */}
-        <Route path="/chat" element={<ProtectedRoute><ChatHome /></ProtectedRoute>} />
+        <Route path="/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
         <Route path="/chat/:conversationId" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>

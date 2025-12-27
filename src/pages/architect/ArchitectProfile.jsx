@@ -122,7 +122,19 @@ export default function ArchitectProfile() {
                             <h2 className="text-2xl font-bold text-slate-800 text-center">
                                 {profile.full_name || `${profile.first_name} ${profile.last_name}`}
                             </h2>
-                            <p className="text-sky-600 text-sm mt-1 font-medium bg-sky-50 px-3 py-1 rounded-full">
+
+                            <div className="flex w-full justify-around my-4 border-y border-sky-50 py-3">
+                                <div className="text-center">
+                                    <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Connections</p>
+                                    <p className="text-lg text-indigo-600 mt-1 font-bold">{profile.connection_count || 0}</p>
+                                </div>
+                                <div className="text-center">
+                                    <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Joined</p>
+                                    <p className="text-xs text-slate-600 mt-1 font-mono">{formatDate(profile.created_at)}</p>
+                                </div>
+                            </div>
+
+                            <p className="text-sky-600 text-sm font-medium bg-sky-50 px-3 py-1 rounded-full">
                                 {profile.studio || "Independent Architect"}
                             </p>
                         </Card>
