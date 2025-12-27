@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import FollowService from "../api/follow.api";
+import { getOrCreateConversation } from "../../chat/api/chat.api";
 import Navbar from "../../../widgets/Navbar/Navbar";
 import { useAuth } from "../../../context/AuthContext";
 
@@ -160,7 +161,25 @@ function RequestsList({ requests, handleAction }) {
     );
 }
 
+
+
+const Avatar = ({ src, name, size = "md" }) => {
+    const sizeClasses = size === "lg" ? "w-20 h-20 text-2xl" : "w-12 h-12 text-lg";
+
+    if (src) {
+        return <img className={`${sizeClasses} rounded-full object-cover border border-slate-200`} src={src} alt="" />;
+    }
+    return (
+        <div className={`${sizeClasses} rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold border border-indigo-200`}>
+            {(name || "U").charAt(0)}
+        </div>
+    );
+};
+
 function ConnectionsList({ connections }) {
+    const navigate = useNavigate();
+    const { user } = useAuth(); // Need current user to generate ID
+
     if (connections.length === 0) {
         return (
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center">
@@ -172,6 +191,23 @@ function ConnectionsList({ connections }) {
             </div>
         );
     }
+
+    const handleMessage = async (targetUserId) => {
+        if (!user || !user.id || !targetUserId) {
+            console.error("User ID missing", user);
+            return;
+        }
+
+        try {
+            // Using the new API to get a valid conversation UUID
+            const conversationId = await getOrCreateConversation([String(user.id), String(targetUserId)]);
+            navigate(`/chat/${conversationId}`);
+        } catch (error) {
+            console.error("Failed to start conversation", error);
+            alert("Could not start chat. Please try again.");
+        }
+    };
+
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {connections.map((person) => (
@@ -188,7 +224,11 @@ function ConnectionsList({ connections }) {
                         >
                             View Portfolio
                         </Link>
-                        <button className="w-full py-2 border border-slate-200 text-slate-600 font-semibold rounded-lg hover:bg-slate-50 transition-colors text-sm">
+                        <button
+                            onClick={() => handleMessage(person.auth_user_id)}
+                            className="w-full py-2 border border-slate-200 text-slate-600 font-semibold rounded-lg hover:bg-slate-50 transition-colors text-sm flex items-center justify-center gap-2"
+                        >
+                            <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
                             Message
                         </button>
                     </div>
@@ -197,16 +237,3 @@ function ConnectionsList({ connections }) {
         </div>
     );
 }
-
-const Avatar = ({ src, name, size = "md" }) => {
-    const sizeClasses = size === "lg" ? "w-20 h-20 text-2xl" : "w-12 h-12 text-lg";
-
-    if (src) {
-        return <img className={`${sizeClasses} rounded-full object-cover border border-slate-200`} src={src} alt="" />;
-    }
-    return (
-        <div className={`${sizeClasses} rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold border border-indigo-200`}>
-            {(name || "U").charAt(0)}
-        </div>
-    );
-};

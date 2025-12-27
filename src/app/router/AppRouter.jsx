@@ -53,6 +53,10 @@ import ProjectUpload from "../../features/portfolio/pages/ProjectUpload";
 import ProjectEdit from "../../features/portfolio/pages/ProjectEdit";
 import ConnectionApprovals from "../../features/follow/pages/ConnectionApprovals";
 
+// Chat
+import ChatHome from "../../features/chat/pages/ChatHome";
+import ChatPage from "../../features/chat/pages/ChatPage";
+
 
 export default function AppRouter() {
   return (
@@ -120,6 +124,10 @@ export default function AppRouter() {
 
         {/* Connections */}
         <Route path="/connections" element={<ProtectedRoute><ConnectionApprovals /></ProtectedRoute>} />
+
+        {/* Chat */}
+        <Route path="/chat" element={<ProtectedRoute><ChatHome /></ProtectedRoute>} />
+        <Route path="/chat/:conversationId" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
   );
