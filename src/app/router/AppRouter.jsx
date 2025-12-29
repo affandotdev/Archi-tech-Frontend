@@ -53,9 +53,13 @@ import ProjectUpload from "../../features/portfolio/pages/ProjectUpload";
 import ProjectEdit from "../../features/portfolio/pages/ProjectEdit";
 import ConnectionApprovals from "../../features/follow/pages/ConnectionApprovals";
 
+
 // Chat
 import ChatHome from "../../features/chat/pages/ChatHome";
 import ChatPage from "../../features/chat/pages/ChatPage";
+
+// AI Assistant
+import AiAssistantPage from "../../features/ai/pages/AiAssistantPage";
 
 
 export default function AppRouter() {
@@ -89,6 +93,7 @@ export default function AppRouter() {
         <Route path="/engineer/dashboard" element={<ProtectedRoute requiredRole="engineer"><EngineerDashboard /></ProtectedRoute>} />
         <Route path="/client/dashboard" element={<ProtectedRoute requiredRole="client"><ClientDashboard /></ProtectedRoute>} />
         <Route path="/client/browse-architects" element={<ProtectedRoute requiredRole="client"><BrowseArchitects /></ProtectedRoute>} />
+        <Route path="/ai-assistant" element={<ProtectedRoute requiredRole="client"><AiAssistantPage /></ProtectedRoute>} />
         <Route path="/admin/dashboard" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
 
         {/* Admin extra routes */}

@@ -87,7 +87,28 @@ const ChatPage = () => {
                                     Chat
                                 </span>
                             </div>
-                            <ChatWindow conversationId={conversationId} senderId={senderId} />
+
+                            {/* Find Active Conversation & Target User */}
+                            {(() => {
+                                const activeConv = conversations.find(c => c.id === conversationId);
+                                // Fallback: If not found in list (e.g. direct link), we might need to rely on the ID itself if it was constructed deterministically? 
+                                // Actually backend ID is UUID.
+                                // If not in list, we rely on ChatWindow to load messages but we can't start call easily without target ID.
+                                // For now, we assume it's in the list or we can't call.
+
+                                let targetUserId = null;
+                                if (activeConv) {
+                                    targetUserId = activeConv.participants.find(p => String(p) !== String(user.id));
+                                }
+
+                                return (
+                                    <ChatWindow
+                                        conversationId={conversationId}
+                                        senderId={senderId}
+                                        targetUserId={targetUserId}
+                                    />
+                                );
+                            })()}
                         </div>
                     ) : (
                         <div className="h-full flex flex-col items-center justify-center text-slate-400">

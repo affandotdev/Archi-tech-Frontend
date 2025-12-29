@@ -52,7 +52,12 @@ export default function ProfessionVerify() {
       // setTimeout(() => navigate("/client/dashboard"), 3000);
 
     } catch (error) {
-      setMessage("Failed to submit request. Please try again later.");
+      console.error("Full error object:", error);
+      console.error("Error response:", error.response);
+      console.error("Error response data:", error.response?.data);
+
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || "Failed to submit request. Please try again later.";
+      setMessage(errorMessage);
       setStatus("error");
       console.error(error);
     } finally {

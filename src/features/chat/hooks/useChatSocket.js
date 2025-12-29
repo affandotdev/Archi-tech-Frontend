@@ -1,10 +1,16 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { getChatSocketUrl } from '../api/chat.ws';
 
-export const useChatSocket = (conversationId, senderId) => {
+export const useChatSocket = (conversationId, senderId, onJsonMessage) => {
     const [messages, setMessages] = useState([]);
     const [status, setStatus] = useState('disconnected');
     const socketRef = useRef(null);
+
+    // Keep callback ref fresh to avoid useEffect dependency loops
+    const onMessageRef = useRef(onJsonMessage);
+    useEffect(() => {
+        onMessageRef.current = onJsonMessage;
+    }, [onJsonMessage]);
 
     useEffect(() => {
         // Validation
@@ -33,6 +39,12 @@ export const useChatSocket = (conversationId, senderId) => {
             try {
                 const data = JSON.parse(event.data);
                 console.log("[useChatSocket] Received:", data);
+
+                // Notify via callback (e.g. for signaling)
+                if (onMessageRef.current) {
+                    onMessageRef.current(data);
+                }
+
                 if (data.message || data.content) {
                     setMessages((prev) => [...prev, data]);
                 } else if (data.error) {
@@ -71,10 +83,20 @@ export const useChatSocket = (conversationId, senderId) => {
         console.log("[useChatSocket] Attempting send. Content:", content, "ReadyState:", ws?.readyState);
 
         if (ws && ws.readyState === WebSocket.OPEN) {
-            const payload = {
-                message: content,
-                sender_id: senderId
-            };
+            let payload;
+            if (typeof content === 'object' && content !== null && content.type) {
+                // Structured message (signaling)
+                payload = {
+                    sender_id: senderId,
+                    ...content
+                };
+            } else {
+                // Standard chat message
+                payload = {
+                    message: content,
+                    sender_id: senderId
+                };
+            }
             ws.send(JSON.stringify(payload));
         } else {
             console.warn("[useChatSocket] Cannot send: Socket not OPEN. Current state:", ws?.readyState);
