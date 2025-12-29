@@ -10,7 +10,7 @@ const ICE_SERVERS = {
 export const useWebRTC = ({ sendMessage, userId, onCallEnd }) => {
     const [localStream, setLocalStream] = useState(null);
     const [remoteStream, setRemoteStream] = useState(null);
-    const [callStatus, setCallStatus] = useState('idle'); // idle, outgoing, incoming, active
+    const [callStatus, setCallStatus] = useState('idle'); 
     const [incomingCaller, setIncomingCaller] = useState(null);
     const [isAudioEnabled, setIsAudioEnabled] = useState(true);
     const [isVideoEnabled, setIsVideoEnabled] = useState(true);
@@ -102,9 +102,6 @@ export const useWebRTC = ({ sendMessage, userId, onCallEnd }) => {
                 payload: {}
             });
 
-            // Callee waits for Offer now? Or Callee can create Offer? 
-            // Usually Caller creates offer after receiving accept. 
-            // But actually, we can trigger peer connection setup here too if we want.
 
         } catch (err) {
             console.error("Error accepting call:", err);
