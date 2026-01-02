@@ -1,11 +1,33 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext"; // Assuming AuthContext exists
+import { useAuth } from "../../context/AuthContext";
+import { getNotifications, markNotificationAsRead } from "../../features/chat/api/chat.api";
 
 const Navbar = ({ title = "Dashboard", user }) => {
     const { logout } = useAuth();
     const navigate = useNavigate();
     const [showDropdown, setShowDropdown] = useState(false);
+    const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+    const [notifications, setNotifications] = useState([]);
+
+    useEffect(() => {
+        if (user?.id) {
+            fetchNotifications();
+            // Poll for notifications every 30 seconds
+            const interval = setInterval(fetchNotifications, 30000);
+            return () => clearInterval(interval);
+        }
+    }, [user?.id]);
+
+    const fetchNotifications = async () => {
+        const data = await getNotifications(user.id);
+        setNotifications(data);
+    };
+
+    const handleMarkAsRead = async (notifId) => {
+        await markNotificationAsRead(notifId);
+        setNotifications(prev => prev.filter(n => n.id !== notifId));
+    };
 
     const handleLogout = () => {
         logout();
@@ -23,11 +45,53 @@ const Navbar = ({ title = "Dashboard", user }) => {
 
             {/* Right Actions */}
             <div className="flex items-center gap-6">
-                {/* Notifications (Mock) */}
-                <button className="relative p-2 text-slate-400 hover:text-indigo-600 transition-colors rounded-full hover:bg-indigo-50">
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-                </button>
+                {/* Notifications */}
+                <div className="relative">
+                    <button
+                        onClick={() => setShowNotifDropdown(!showNotifDropdown)}
+                        className="relative p-2 text-slate-400 hover:text-indigo-600 transition-colors rounded-full hover:bg-indigo-50"
+                    >
+                        {notifications.length > 0 && (
+                            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white animate-pulse"></span>
+                        )}
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                    </button>
+
+                    {showNotifDropdown && (
+                        <>
+                            <div className="fixed inset-0 z-10 cursor-default" onClick={() => setShowNotifDropdown(false)}></div>
+                            <div className="absolute right-0 mt-3 w-80 bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-20 animate-in fade-in slide-in-from-top-2 duration-200">
+                                <div className="px-4 py-3 border-b border-slate-50 flex justify-between items-center">
+                                    <p className="text-sm font-semibold text-slate-800">Notifications</p>
+                                    <span className="text-xs bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full">{notifications.length} New</span>
+                                </div>
+                                <div className="max-h-80 overflow-y-auto">
+                                    {notifications.length === 0 ? (
+                                        <div className="p-8 text-center text-slate-400 text-sm">No new notifications</div>
+                                    ) : (
+                                        notifications.map((notif) => (
+                                            <div key={notif.id} className="px-4 py-3 hover:bg-slate-50 border-b border-slate-50 transition-colors">
+                                                <div className="flex justify-between items-start gap-2">
+                                                    <div>
+                                                        <p className="text-sm text-slate-800 font-medium">New Message</p>
+                                                        <p className="text-xs text-slate-500 mt-0.5 max-w-[200px] truncate">Check your messages</p>
+                                                        <p className="text-[10px] text-slate-400 mt-1">{new Date(notif.created_at).toLocaleTimeString()}</p>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => handleMarkAsRead(notif.id)}
+                                                        className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                                                    >
+                                                        Mark Read
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </div>
 
                 {/* User Profile */}
                 <div className="relative">

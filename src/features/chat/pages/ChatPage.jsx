@@ -3,7 +3,7 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '../../../widgets/Navbar/Navbar';
 import ChatWindow from '../components/ChatWindow';
 import ChatSidebar from '../components/ChatSidebar';
-import { getConversations } from '../api/chat.api';
+import { getConversations, markConversationAsRead } from '../api/chat.api';
 import FollowService from '../../follow/api/follow.api';
 
 const ChatPage = () => {
@@ -20,6 +20,11 @@ const ChatPage = () => {
         const loadData = async () => {
             if (!user?.id) return;
             try {
+                if (conversationId) {
+                    // Mark messages as read when entering conversation
+                    await markConversationAsRead(user.id, conversationId);
+                }
+
                 const [convsData, connsData] = await Promise.all([
                     getConversations(user.id),
                     FollowService.getConnections()

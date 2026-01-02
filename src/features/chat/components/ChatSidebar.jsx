@@ -69,9 +69,16 @@ const ChatSidebar = ({ conversations, connections, currentUserId, activeId, user
                                                 {new Date(conv.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             </span>
                                         </div>
-                                        <p className={`text-xs truncate ${isActive ? 'text-indigo-600 font-medium' : 'text-slate-500'}`}>
-                                            {preview}
-                                        </p>
+                                        <div className="flex justify-between items-center">
+                                            <p className={`text-xs truncate ${isActive ? 'text-indigo-600 font-medium' : 'text-slate-500'} flex-1`}>
+                                                {preview}
+                                            </p>
+                                            {conv.unread_count > 0 && (
+                                                <span className="ml-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[1.2rem] text-center">
+                                                    {conv.unread_count}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>

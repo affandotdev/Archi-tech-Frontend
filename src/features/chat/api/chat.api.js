@@ -51,3 +51,65 @@ export const getConversations = async (userId) => {
         throw error;
     }
 };
+
+/**
+ * Registers the FCM token for push notifications
+ * @param {string} userId - Current User UUID
+ * @param {string} token - FCM Device Token
+ */
+export const registerFcmToken = async (userId, token) => {
+    try {
+        await axios.post(`${CHAT_API_URL}/fcm/register/`, {
+            user_id: userId,
+            token: token
+        });
+        console.log("FCM Token registered with backend");
+    } catch (error) {
+        console.error("Failed to register FCM token:", error);
+    }
+};
+
+/**
+ * Fetches notifications for the user
+ * @param {string} userId
+ * @returns {Promise<Array>}
+ */
+export const getNotifications = async (userId) => {
+    try {
+        const response = await axios.get(`${CHAT_API_URL}/notifications/list/`, {
+            params: { user_id: userId }
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Failed to fetch notifications:", error);
+        return [];
+    }
+};
+
+/**
+ * Marks a notification as read
+ * @param {number} notificationId
+ */
+export const markNotificationAsRead = async (notificationId) => {
+    try {
+        await axios.post(`${CHAT_API_URL}/notifications/${notificationId}/read/`);
+    } catch (error) {
+        console.error("Failed to mark notification as read:", error);
+    }
+};
+
+/**
+ * Marks all notifications for a conversation as read
+ * @param {string} userId
+ * @param {string} conversationId
+ */
+export const markConversationAsRead = async (userId, conversationId) => {
+    try {
+        await axios.post(`${CHAT_API_URL}/notifications/read/`, {
+            user_id: userId,
+            conversation_id: conversationId
+        });
+    } catch (error) {
+        console.error("Failed to mark conversation as read:", error);
+    }
+};
