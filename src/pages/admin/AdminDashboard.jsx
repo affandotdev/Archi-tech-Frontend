@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { getDashboardStats, getSystemHealth } from "../../services/AdminService";
+import { getDashboardStats, getSystemHealth, getDailyReports } from "../../services/AdminService";
 import Navbar from "../../widgets/Navbar/Navbar";
 import StatsCard from "../../widgets/DashboardWidgets/StatsCard";
 import QuickActions from "../../widgets/DashboardWidgets/QuickActions";
 import RecentActivities from "../../widgets/DashboardWidgets/RecentActivities";
+import DailyReportChart from "../../widgets/DashboardWidgets/DailyReportChart";
 
 export default function AdminDashboard() {
   const { user: authUser, role } = useAuth();
@@ -15,6 +16,7 @@ export default function AdminDashboard() {
     openIncidents: 0,
   });
   const [health, setHealth] = useState(null);
+  const [reports, setReports] = useState([]); // [NEW] State for reports
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -35,16 +37,19 @@ export default function AdminDashboard() {
     const loadDashboardData = async () => {
       try {
         setLoading(true);
-        const [statsRes, healthRes] = await Promise.all([
+        const [statsRes, healthRes, reportsRes] = await Promise.all([
           getDashboardStats(),
           getSystemHealth(),
+          getDailyReports(), // [NEW] Fetch reports
         ]);
+
         setStats({
           totalUsers: statsRes.data.totalUsers || statsRes.data.total_users || 0,
           activeSessions: statsRes.data.activeSessions || statsRes.data.active_sessions || 0,
           openIncidents: statsRes.data.openIncidents || statsRes.data.open_incidents || 0,
         });
         setHealth(healthRes.data);
+        setReports(reportsRes.data); // [NEW] Set reports data
       } catch (err) {
         console.error("Failed to load admin dashboard data", err);
       } finally {
@@ -107,6 +112,9 @@ export default function AdminDashboard() {
     }
   ] : [];
 
+
+  // ... (rest of the code)
+
   return (
     <div className="min-h-screen bg-slate-50">
       <Navbar title="Admin Console" user={authUser} />
@@ -158,8 +166,10 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content Area */}
           <div className="lg:col-span-2 space-y-8">
+            <DailyReportChart data={reports} /> {/* [NEW] Render Chart */}
             <QuickActions title="Admin Management" actions={quickActions} />
           </div>
+
 
           {/* Sidebar / Feed Area */}
           <div className="lg:col-span-1">

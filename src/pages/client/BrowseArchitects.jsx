@@ -56,7 +56,18 @@ export default function BrowseArchitects() {
 
             {/* Header / Search Section */}
             <div className="bg-indigo-900 text-white py-12 px-4 shadow-lg">
-                <div className="max-w-7xl mx-auto text-center">
+                <div className="max-w-7xl mx-auto text-center relative">
+                    {/* Back Button */}
+                    <button
+                        onClick={() => navigate("/client/dashboard")}
+                        className="absolute left-0 top-1 text-indigo-300 hover:text-white flex items-center transition-colors mb-4 md:mb-0"
+                    >
+                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                        Back
+                    </button>
+
                     <h1 className="text-4xl font-bold mb-4">Find Your Expert</h1>
                     <p className="text-indigo-200 mb-8 max-w-2xl mx-auto">
                         Search for top-tier Architects and Engineers to collaborate on your vision.

@@ -33,3 +33,8 @@ export const getSystemHealth = () => {
     // Health often doesn't need auth, but if it does, use authHttp
     return authHttp.get(`/api/auth/admin/dashboard/health/`);
 };
+
+export const getDailyReports = () => {
+    return authHttp.get(`/api/auth/admin/daily-reports/`);
+};
+
