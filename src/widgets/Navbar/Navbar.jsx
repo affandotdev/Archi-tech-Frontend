@@ -121,7 +121,7 @@ const Navbar = ({ title = "Dashboard", user }) => {
                             >
                                 <div className="text-right hidden sm:block">
                                     <p className="text-sm font-semibold text-slate-800 leading-none">
-                                        {user?.first_name || "User"} {user?.last_name || ""}
+                                        {(user?.full_name || `${user?.first_name || ""} ${user?.last_name || ""}`).trim() || "User"}
                                     </p>
                                     <p className="text-xs text-slate-500 mt-1 capitalize">{user?.role || "Member"}</p>
                                 </div>

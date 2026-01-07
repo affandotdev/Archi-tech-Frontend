@@ -122,7 +122,7 @@ export default function AdminDashboard() {
       <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-slate-800">
-            Welcome back, {authUser?.firstName || "Admin"}
+            Welcome back, {(authUser?.full_name || authUser?.first_name || authUser?.firstName || "Admin").split(" ")[0]}
           </h2>
           <p className="text-slate-500 mt-2">
             Overview of system performance and user activity.
