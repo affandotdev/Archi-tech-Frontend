@@ -1,7 +1,7 @@
 import axios from "axios";
 
-// Base URL for Chat Service API (Port 8003)
-const CHAT_API_URL = "http://localhost:8003/api/chat";
+// Base URL for Chat Service API (Port 8002)
+const CHAT_API_URL = "http://localhost:8002/api/chat";
 
 /**
  * Creates or retrieves an existing conversation between participants

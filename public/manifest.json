@@ -1,0 +1,7 @@
+{
+    "name": "Archi-Tech",
+    "short_name": "ArchiTech",
+    "start_url": ".",
+    "display": "standalone",
+    "gcm_sender_id": "282286211166"
+}

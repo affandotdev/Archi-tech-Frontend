@@ -77,9 +77,14 @@ const ChatWindow = ({ conversationId, senderId, targetUserId }) => {
                 conversationId={conversationId}
                 status={status}
                 onStartCall={() => {
-                    if (targetUserId) startCall(targetUserId);
-                    else alert("Cannot call: Target user not found.");
+                    console.log("[ChatWindow] Start Call clicked. Target:", targetUserId);
+                    if (targetUserId) {
+                        startCall(targetUserId);
+                    } else {
+                        console.warn("[ChatWindow] Verify targetUserId failed.");
+                    }
                 }}
+                callDisabled={!targetUserId}
             />
 
             <MessageList messages={allMessages} currentUserId={senderId} />

@@ -10,13 +10,24 @@ const ICE_SERVERS = {
 export const useWebRTC = ({ sendMessage, userId, onCallEnd }) => {
     const [localStream, setLocalStream] = useState(null);
     const [remoteStream, setRemoteStream] = useState(null);
-    const [callStatus, setCallStatus] = useState('idle'); 
+    const [callStatus, setCallStatus] = useState('idle');
     const [incomingCaller, setIncomingCaller] = useState(null);
     const [isAudioEnabled, setIsAudioEnabled] = useState(true);
     const [isVideoEnabled, setIsVideoEnabled] = useState(true);
 
     const peerConnectionRef = useRef(null);
     const localStreamRef = useRef(null);
+
+    // Helper to cleanup media streams
+    const cleanupMedia = useCallback(() => {
+        if (localStreamRef.current) {
+            localStreamRef.current.getTracks().forEach(track => {
+                track.stop();
+            });
+            localStreamRef.current = null;
+        }
+        setLocalStream(null);
+    }, []);
 
     // Initialize Peer Connection
     const createPeerConnection = useCallback(() => {
@@ -29,7 +40,7 @@ export const useWebRTC = ({ sendMessage, userId, onCallEnd }) => {
                 sendMessage({
                     type: 'webrtc.ice',
                     payload: event.candidate,
-                    to: incomingCaller || pc.remoteUser // We need to track who we are talking to
+                    to: incomingCaller || pc.remoteUser
                 });
             }
         };
@@ -52,21 +63,16 @@ export const useWebRTC = ({ sendMessage, userId, onCallEnd }) => {
 
     // Start Call (Offer)
     const startCall = async (targetUserId) => {
-        try {
-            setCallStatus('outgoing');
-            // Hack/Optimization: Store target temporarily on the PC object or Ref if needed
-            // But ideally we pass it. For now let's rely on upper layer or local state.
-            // Actually, we need to send "call.start" signaling first usually? 
-            // Or just jump to WebRTC offer. 
-            // Let's do: call.start -> (User Accepts) -> webrtc.offer
-            // But for simplicity: Start with local stream & Offer immediately or wait?
-            // "Standard" flow: 
-            // 1. Caller: startCall -> sends "call.start"
-            // 2. Callee: Gets "call.start" -> Shows Incoming Modal
-            // 3. Callee: Accepts -> sends "call.accept"
-            // 4. Caller: Gets "call.accept" -> Creates Offer -> sends "webrtc.offer"
+        if (callStatus === 'outgoing' || callStatus === 'active') return;
 
-            // Let's implement this "Ring" phase flow.
+        try {
+            cleanupMedia(); // Ensure clean slate
+            setCallStatus('outgoing');
+
+            // Get stream BEFORE signaling to avoid race condition where they accept before we have stream
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            setLocalStream(stream);
+            localStreamRef.current = stream;
 
             sendMessage({
                 type: 'call.start',
@@ -74,23 +80,22 @@ export const useWebRTC = ({ sendMessage, userId, onCallEnd }) => {
                 payload: {}
             });
 
-            // We don't verify peer yet/get stream yet until they accept? 
-            // Or we can get local stream ready.
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            setLocalStream(stream);
-            localStreamRef.current = stream;
-
         } catch (err) {
             console.error("Error starting call:", err);
             setCallStatus('idle');
+            alert("Could not access camera/microphone. Please ensure permissions are granted.");
+            cleanupMedia();
         }
     };
 
     // Accept Call
     const acceptCall = async (callerId) => {
+        if (callStatus === 'active') return;
+
         try {
+            cleanupMedia(); // Ensure clean slate
             setCallStatus('active');
-            setIncomingCaller(callerId); // Ensure we know who we are talking to
+            setIncomingCaller(callerId);
 
             const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
             setLocalStream(stream);
@@ -102,9 +107,14 @@ export const useWebRTC = ({ sendMessage, userId, onCallEnd }) => {
                 payload: {}
             });
 
-
         } catch (err) {
             console.error("Error accepting call:", err);
+            // Specific handling for "Device in use"
+            if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+                alert("Camera or Microphone is already in use by another application. Please close it and try again.");
+            } else {
+                alert("Failed to access camera/microphone.");
+            }
             endCall();
         }
     };
@@ -119,36 +129,27 @@ export const useWebRTC = ({ sendMessage, userId, onCallEnd }) => {
         setIncomingCaller(null);
     };
 
-    const endCall = () => {
+    const endCall = useCallback(() => {
         if (peerConnectionRef.current) {
             peerConnectionRef.current.close();
             peerConnectionRef.current = null;
         }
 
-        if (localStreamRef.current) {
-            localStreamRef.current.getTracks().forEach(track => track.stop());
-            localStreamRef.current = null;
-        }
+        cleanupMedia();
 
-        setLocalStream(null);
         setRemoteStream(null);
         setCallStatus('idle');
         setIncomingCaller(null);
 
-        // Notify other peer if we were active
-        // But we don't know who "other peer" is easily if we didn't store it well.
-        // Assuming 'incomingCaller' or passed 'targetUserId' from UI context?
-        // We'll rely on UI to pass target if needed, or broadcast 'call.end'.
-
-        // Simplest: Send call.end to everyone/current peer?
-        // We'll expose a function that UI calls with targetId if known.
         if (onCallEnd) onCallEnd();
-    };
+    }, [cleanupMedia, onCallEnd]);
 
     // Internal: Create Offer
     const createOffer = async (targetUserId) => {
+        if (!localStreamRef.current) return;
+
         const pc = createPeerConnection();
-        pc.remoteUser = targetUserId; // Attach for ICE candidates
+        pc.remoteUser = targetUserId;
 
         // Add tracks
         localStreamRef.current.getTracks().forEach(track => {
@@ -167,10 +168,12 @@ export const useWebRTC = ({ sendMessage, userId, onCallEnd }) => {
 
     // Internal: Create Answer
     const createAnswer = async (targetUserId, offer) => {
+        if (!localStreamRef.current) return;
+
         const pc = createPeerConnection();
         pc.remoteUser = targetUserId;
 
-        // Add tracks (Answerer must also add tracks to be seen)
+        // Add tracks
         localStreamRef.current.getTracks().forEach(track => {
             pc.addTrack(track, localStreamRef.current);
         });
@@ -188,8 +191,6 @@ export const useWebRTC = ({ sendMessage, userId, onCallEnd }) => {
 
     // Handle Incoming Signals
     const handleSignal = async (signal) => {
-        // If we ignore messages not for us (handled by UI filtering ideally, but safeguard here)
-        // Normalize to strings for comparison
         if (signal.to && String(signal.to) !== String(userId)) return;
 
         const { type, from, payload } = signal;
@@ -197,7 +198,6 @@ export const useWebRTC = ({ sendMessage, userId, onCallEnd }) => {
         switch (type) {
             case 'call.start':
                 if (callStatus !== 'idle') {
-                    // Busy? Auto-reject or notify
                     sendMessage({ type: 'call.reject', to: from, payload: { reason: 'busy' } });
                     return;
                 }
@@ -208,7 +208,6 @@ export const useWebRTC = ({ sendMessage, userId, onCallEnd }) => {
             case 'call.accept':
                 if (callStatus === 'outgoing') {
                     setCallStatus('active');
-                    // Initiate WebRTC Offer
                     await createOffer(from);
                 }
                 break;
@@ -225,10 +224,15 @@ export const useWebRTC = ({ sendMessage, userId, onCallEnd }) => {
 
             case 'webrtc.offer':
                 if (callStatus === 'active' || callStatus === 'incoming') {
-                    // Incoming might be skipped if we accepted -> went active -> got offer.
-                    // Or if we just auto-accepted?
-                    // Ensure we are in a state to accept offer.
-                    setCallStatus('active'); // Confirm active
+                    setCallStatus('active');
+                    // Safety check: if we somehow don't have a stream yet (race condition), wait or fail
+                    if (!localStreamRef.current) {
+                        console.warn("Received offer but no local stream ready. Waiting for user accept?");
+                        // If we are in 'incoming' state here, it means the other side sent offer BEFORE we accepted?
+                        // That shouldn't happen in our flow (Offer sent AFTER accept). 
+                        // But if it does, we can't answer without tracks usually if we want 2-way.
+                        return;
+                    }
                     await createAnswer(from, payload);
                 }
                 break;
@@ -251,7 +255,15 @@ export const useWebRTC = ({ sendMessage, userId, onCallEnd }) => {
         }
     };
 
-
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            cleanupMedia();
+            if (peerConnectionRef.current) {
+                peerConnectionRef.current.close();
+            }
+        };
+    }, [cleanupMedia]);
 
     const toggleAudio = () => {
         if (localStreamRef.current) {
