@@ -146,7 +146,7 @@ const Navbar = ({ title = "Dashboard", user }) => {
                                         </div>
 
                                         <Link
-                                            to={`/${user?.role || 'client'}/profile`}
+                                            to={user?.role === 'admin' ? '/client/profile' : `/${user?.role || 'client'}/profile`}
                                             className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
                                             onClick={() => setShowDropdown(false)}
                                         >

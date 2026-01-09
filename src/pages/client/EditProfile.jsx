@@ -126,7 +126,7 @@ export default function EditProfile() {
       setError(null);
       setSuccess(null);
       const formData = new FormData();
-      formData.append("profile_image", imageFile);
+      formData.append("avatar", imageFile);
 
       const res = await uploadProfileImage(formData);
       setSuccess("Image uploaded successfully!");
