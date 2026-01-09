@@ -1,7 +1,7 @@
 import axios from "axios";
 
-// AI Service is running on port 8002
-const AI_SERVICE_URL = "http://127.0.0.1:8002";
+// AI Service is running on port 8003
+const AI_SERVICE_URL = "http://localhost:8003";
 
 /**
  * Ask the AI for an explanation or advice.

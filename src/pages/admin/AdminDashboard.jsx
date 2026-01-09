@@ -37,10 +37,9 @@ export default function AdminDashboard() {
     const loadDashboardData = async () => {
       try {
         setLoading(true);
-        const [statsRes, healthRes, reportsRes] = await Promise.all([
+        const [statsRes, healthRes] = await Promise.all([
           getDashboardStats(),
           getSystemHealth(),
-          getDailyReports(), // [NEW] Fetch reports
         ]);
 
         setStats({
@@ -49,7 +48,7 @@ export default function AdminDashboard() {
           openIncidents: statsRes.data.openIncidents || statsRes.data.open_incidents || 0,
         });
         setHealth(healthRes.data);
-        setReports(reportsRes.data); // [NEW] Set reports data
+        setReports([]);
       } catch (err) {
         console.error("Failed to load admin dashboard data", err);
       } finally {
